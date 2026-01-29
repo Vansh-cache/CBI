@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Plus, Eye, Edit, Trash2, Copy, BarChart3, Loader2 } from 'lucide-react';
+import { apiDelete } from '../../lib/api';
 import { useNavigate } from 'react-router';
 import { apiGet } from '../../lib/api';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -19,6 +20,19 @@ interface Dashboard {
 }
 
 export default function DeveloperHome() {
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+    const handleDelete = async (dashboardId: number) => {
+      if (!window.confirm('Are you sure you want to delete this dashboard? This action cannot be undone.')) return;
+      setDeletingId(dashboardId);
+      try {
+        await apiDelete(`/api/dashboards/${dashboardId}`);
+        setDashboards((prev) => prev.filter((d) => d.id !== dashboardId));
+      } catch (e) {
+        alert('Failed to delete dashboard.');
+      } finally {
+        setDeletingId(null);
+      }
+    };
   const [dashboards, setDashboards] = useState<Dashboard[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -241,8 +255,10 @@ export default function DeveloperHome() {
                       <Copy className="w-4 h-4" />
                     </button>
                     <button
-                      style={{ padding: '0.5rem', color: colors.muted, background: 'none', border: 'none', cursor: 'pointer' }}
-                      title="Delete (coming soon)"
+                      onClick={() => handleDelete(d.id)}
+                      style={{ padding: '0.5rem', color: colors.muted, background: 'none', border: 'none', cursor: deletingId === d.id ? 'wait' : 'pointer', opacity: deletingId === d.id ? 0.5 : 1 }}
+                      title="Delete"
+                      disabled={deletingId === d.id}
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
