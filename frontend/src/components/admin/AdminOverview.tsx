@@ -12,6 +12,17 @@ import {
 import { apiGet } from '../../lib/api';
 import { useTheme } from '../../contexts/ThemeContext';
 
+// Mobile detection hook
+function useIsMobile(breakpoint = 768) {
+  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' && window.innerWidth < breakpoint);
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < breakpoint);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [breakpoint]);
+  return isMobile;
+}
+
 interface OverviewCounts {
   users: number;
   dashboards: number;
@@ -21,6 +32,7 @@ interface OverviewCounts {
 
 export default function AdminOverview() {
   const { isDark } = useTheme();
+  const isMobile = useIsMobile();
   const [counts, setCounts] = useState<OverviewCounts>({
     users: 0,
     dashboards: 0,
@@ -171,10 +183,10 @@ export default function AdminOverview() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? '16px' : '24px' }}>
       <div className="animate-fade-in-down">
-        <h2 style={{ fontSize: '1.5rem', fontWeight: 600, color: colors.text, marginBottom: '4px' }}>System Overview</h2>
-        <p style={{ color: colors.textMuted }}>Manage your Cache BI dashboard system</p>
+        <h2 style={{ fontSize: isMobile ? '1.25rem' : '1.5rem', fontWeight: 600, color: colors.text, marginBottom: '4px' }}>System Overview</h2>
+        <p style={{ color: colors.textMuted, fontSize: isMobile ? '0.875rem' : '1rem' }}>Manage your Cache BI dashboard system</p>
       </div>
 
       {error && (
@@ -182,7 +194,7 @@ export default function AdminOverview() {
       )}
 
       {/* KPI Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '24px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fit, minmax(240px, 1fr))', gap: isMobile ? '12px' : '24px' }}>
         {kpiCards.map((kpi, i) => {
           const palette = colorPalette[kpi.color];
           return (
@@ -190,23 +202,23 @@ export default function AdminOverview() {
               key={kpi.title}
               className="hover-lift"
               style={{
-                background: colors.cardBg, borderRadius: '20px', padding: '28px', border: `1px solid ${colors.cardBorder}`,
+                background: colors.cardBg, borderRadius: isMobile ? '14px' : '20px', padding: isMobile ? '16px' : '28px', border: `1px solid ${colors.cardBorder}`,
                 boxShadow: colors.cardShadow, transition: 'all 0.4s cubic-bezier(0.33, 1, 0.68, 1)', backdropFilter: 'blur(10px)',
                 animation: 'animate-fade-in-up 0.5s ease-out forwards',
                 animationDelay: `${i * 80}ms`,
                 opacity: 0,
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-6px)'; e.currentTarget.style.boxShadow = isDark ? '0 20px 40px rgba(0,0,0,0.35)' : '0 20px 40px rgba(0,0,0,0.12)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = colors.cardShadow; }}
+              onMouseEnter={(e) => { if (!isMobile) { e.currentTarget.style.transform = 'translateY(-6px)'; e.currentTarget.style.boxShadow = isDark ? '0 20px 40px rgba(0,0,0,0.35)' : '0 20px 40px rgba(0,0,0,0.12)'; } }}
+              onMouseLeave={(e) => { if (!isMobile) { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = colors.cardShadow; } }}
             >
-              <div style={{ marginBottom: '16px' }}>
-                <div style={{ background: palette.icon, padding: '12px', borderRadius: '12px', display: 'inline-flex' }}>
-                  <kpi.icon style={{ width: '24px', height: '24px', color: palette.text }} />
+              <div style={{ marginBottom: isMobile ? '10px' : '16px' }}>
+                <div style={{ background: palette.icon, padding: isMobile ? '8px' : '12px', borderRadius: isMobile ? '8px' : '12px', display: 'inline-flex' }}>
+                  <kpi.icon style={{ width: isMobile ? '18px' : '24px', height: isMobile ? '18px' : '24px', color: palette.text }} />
                 </div>
               </div>
-              <h3 style={{ fontSize: '14px', fontWeight: 500, color: palette.text, marginBottom: '4px' }}>{kpi.title}</h3>
-              <p style={{ fontSize: '2rem', fontWeight: 700, color: colors.text, marginBottom: '8px' }}>{kpi.value}</p>
-              <p style={{ fontSize: '14px', color: colors.textMuted }}>{kpi.description}</p>
+              <h3 style={{ fontSize: isMobile ? '11px' : '14px', fontWeight: 500, color: palette.text, marginBottom: '4px' }}>{kpi.title}</h3>
+              <p style={{ fontSize: isMobile ? '1.25rem' : '2rem', fontWeight: 700, color: colors.text, marginBottom: isMobile ? '4px' : '8px' }}>{kpi.value}</p>
+              {!isMobile && <p style={{ fontSize: '14px', color: colors.textMuted }}>{kpi.description}</p>}
             </div>
           );
         })}
@@ -214,8 +226,8 @@ export default function AdminOverview() {
 
       {/* Management Sections */}
       <div className="animate-fade-in" style={{ animationDelay: '400ms' }}>
-        <h3 style={{ fontSize: '1.125rem', fontWeight: 600, color: colors.text, marginBottom: '16px' }}>Quick Access</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
+        <h3 style={{ fontSize: isMobile ? '1rem' : '1.125rem', fontWeight: 600, color: colors.text, marginBottom: isMobile ? '12px' : '16px' }}>Quick Access</h3>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(300px, 1fr))', gap: isMobile ? '12px' : '24px' }}>
           {managementSections.map((section, i) => {
             const palette = colorPalette[section.color];
             return (
@@ -224,27 +236,27 @@ export default function AdminOverview() {
                 to={section.link}
                 className="hover-lift"
                 style={{
-                  background: colors.cardBg, borderRadius: '20px', padding: '28px', border: `1px solid ${colors.cardBorder}`,
+                  background: colors.cardBg, borderRadius: isMobile ? '14px' : '20px', padding: isMobile ? '16px' : '28px', border: `1px solid ${colors.cardBorder}`,
                   boxShadow: colors.cardShadow, textDecoration: 'none', transition: 'all 0.4s cubic-bezier(0.33, 1, 0.68, 1)', backdropFilter: 'blur(10px)',
                   animation: 'animate-fade-in-up 0.5s ease-out forwards',
                   animationDelay: `${500 + i * 80}ms`,
                   opacity: 0,
                 }}
-                onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-6px)'; e.currentTarget.style.boxShadow = isDark ? '0 20px 40px rgba(0,0,0,0.35)' : '0 20px 40px rgba(0,0,0,0.12)'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = colors.cardShadow; }}
+                onMouseEnter={(e) => { if (!isMobile) { e.currentTarget.style.transform = 'translateY(-6px)'; e.currentTarget.style.boxShadow = isDark ? '0 20px 40px rgba(0,0,0,0.35)' : '0 20px 40px rgba(0,0,0,0.12)'; } }}
+                onMouseLeave={(e) => { if (!isMobile) { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = colors.cardShadow; } }}
               >
-                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '16px' }}>
-                  <div style={{ background: palette.icon, padding: '12px', borderRadius: '12px', transition: 'transform 0.35s cubic-bezier(0.33, 1, 0.68, 1)' }}>
-                    <section.icon style={{ width: '24px', height: '24px', color: palette.text }} />
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: isMobile ? '10px' : '16px' }}>
+                  <div style={{ background: palette.icon, padding: isMobile ? '8px' : '12px', borderRadius: isMobile ? '8px' : '12px', transition: 'transform 0.35s cubic-bezier(0.33, 1, 0.68, 1)' }}>
+                    <section.icon style={{ width: isMobile ? '18px' : '24px', height: isMobile ? '18px' : '24px', color: palette.text }} />
                   </div>
-                  <span style={{ fontSize: '1.5rem', fontWeight: 700, color: palette.text }}>
+                  <span style={{ fontSize: isMobile ? '1.25rem' : '1.5rem', fontWeight: 700, color: palette.text }}>
                     {loading ? '—' : section.count}
                   </span>
                 </div>
-                <h4 style={{ fontSize: '1.125rem', fontWeight: 600, color: colors.text, marginBottom: '8px' }}>
+                <h4 style={{ fontSize: isMobile ? '1rem' : '1.125rem', fontWeight: 600, color: colors.text, marginBottom: '8px' }}>
                   {section.title}
                 </h4>
-                <p style={{ fontSize: '14px', color: colors.textMuted }}>{section.description}</p>
+                <p style={{ fontSize: isMobile ? '0.8125rem' : '14px', color: colors.textMuted }}>{section.description}</p>
               </Link>
             );
           })}
@@ -253,8 +265,8 @@ export default function AdminOverview() {
 
       {/* System Status */}
       <div className="animate-fade-in-up animate-delay-300">
-        <h3 style={{ fontSize: '1.125rem', fontWeight: 600, color: colors.text, marginBottom: '16px' }}>System Status</h3>
-        <div style={{ background: colors.cardBg, borderRadius: '16px', padding: '24px', border: `1px solid ${colors.cardBorder}`, boxShadow: colors.cardShadow, transition: 'transform 0.35s cubic-bezier(0.33, 1, 0.68, 1), box-shadow 0.35s cubic-bezier(0.33, 1, 0.68, 1)' }}>
+        <h3 style={{ fontSize: isMobile ? '1rem' : '1.125rem', fontWeight: 600, color: colors.text, marginBottom: isMobile ? '12px' : '16px' }}>System Status</h3>
+        <div style={{ background: colors.cardBg, borderRadius: isMobile ? '12px' : '16px', padding: isMobile ? '16px' : '24px', border: `1px solid ${colors.cardBorder}`, boxShadow: colors.cardShadow, transition: 'transform 0.35s cubic-bezier(0.33, 1, 0.68, 1), box-shadow 0.35s cubic-bezier(0.33, 1, 0.68, 1)' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '16px', borderBottom: `1px solid ${colors.sectionBorder}` }}>
               <div style={{ display: 'flex', alignItems: 'center' }}>

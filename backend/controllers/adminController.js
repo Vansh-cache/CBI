@@ -1,10 +1,32 @@
 /**
  * Admin Controller
- * Handles API configuration management
+ * Handles API configuration and organization user management
  */
 
+const axios = require('axios');
 const { validationResult } = require('express-validator');
 const pool = require('../database/db');
+
+/** Get Microsoft Graph API token (client credentials) */
+async function getGraphToken() {
+    const tenantId = process.env.AZURE_TENANT_ID;
+    const clientId = process.env.AZURE_CLIENT_ID;
+    const clientSecret = process.env.AZURE_CLIENT_SECRET;
+    if (!tenantId || !clientId || !clientSecret) {
+        throw new Error('Azure configuration missing: AZURE_TENANT_ID, AZURE_CLIENT_ID, AZURE_CLIENT_SECRET');
+    }
+    const url = `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`;
+    const params = new URLSearchParams({
+        grant_type: 'client_credentials',
+        client_id: clientId,
+        client_secret: clientSecret,
+        scope: 'https://graph.microsoft.com/.default',
+    });
+    const res = await axios.post(url, params.toString(), {
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    });
+    return res.data.access_token;
+}
 
 /**
  * Get all API configurations
@@ -17,11 +39,11 @@ const getApiConfigs = async (req, res) => {
              JOIN users u ON ac.created_by = u.id
              ORDER BY ac.created_at DESC`
         );
-        
+
         // Mask sensitive auth data and ensure headers/auth_config are strings
         const safeConfigs = configs.map(config => {
             const safe = { ...config };
-            
+
             // Handle headers - ensure it's a string
             if (safe.headers) {
                 try {
@@ -43,12 +65,12 @@ const getApiConfigs = async (req, res) => {
             } else {
                 safe.headers = '{}';
             }
-            
+
             // Handle auth_config - mask sensitive data and ensure it's a string
             if (safe.auth_config) {
                 try {
-                    const authConfig = typeof safe.auth_config === 'string' 
-                        ? JSON.parse(safe.auth_config) 
+                    const authConfig = typeof safe.auth_config === 'string'
+                        ? JSON.parse(safe.auth_config)
                         : safe.auth_config;
                     // Mask tokens/keys
                     if (authConfig && typeof authConfig === 'object') {
@@ -65,10 +87,10 @@ const getApiConfigs = async (req, res) => {
             } else {
                 safe.auth_config = '{}';
             }
-            
+
             return safe;
         });
-        
+
         res.json({ success: true, data: safeConfigs });
     } catch (error) {
         console.error('Get API configs error:', error);
@@ -82,7 +104,7 @@ const getApiConfigs = async (req, res) => {
 const getApiConfigById = async (req, res) => {
     try {
         const { id } = req.params;
-        
+
         const [configs] = await pool.query(
             `SELECT ac.*, u.email as created_by_email
              FROM api_configurations ac
@@ -90,17 +112,17 @@ const getApiConfigById = async (req, res) => {
              WHERE ac.id = ?`,
             [id]
         );
-        
+
         if (configs.length === 0) {
-            return res.status(404).json({ 
-                success: false, 
-                message: 'API configuration not found' 
+            return res.status(404).json({
+                success: false,
+                message: 'API configuration not found'
             });
         }
-        
+
         // Mask sensitive auth data and ensure headers/auth_config are strings
         const config = configs[0];
-        
+
         // Handle headers - ensure it's a string
         if (config.headers) {
             try {
@@ -122,12 +144,12 @@ const getApiConfigById = async (req, res) => {
         } else {
             config.headers = '{}';
         }
-        
+
         // Handle auth_config - mask sensitive data and ensure it's a string
         if (config.auth_config) {
             try {
-                const authConfig = typeof config.auth_config === 'string' 
-                    ? JSON.parse(config.auth_config) 
+                const authConfig = typeof config.auth_config === 'string'
+                    ? JSON.parse(config.auth_config)
                     : config.auth_config;
                 if (authConfig && typeof authConfig === 'object') {
                     if (authConfig.token) authConfig.token = '***masked***';
@@ -143,7 +165,7 @@ const getApiConfigById = async (req, res) => {
         } else {
             config.auth_config = '{}';
         }
-        
+
         res.json({ success: true, data: config });
     } catch (error) {
         console.error('Get API config error:', error);
@@ -158,13 +180,13 @@ const createApiConfig = async (req, res) => {
     try {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'Validation failed', 
-                errors: errors.array() 
+            return res.status(400).json({
+                success: false,
+                message: 'Validation failed',
+                errors: errors.array()
             });
         }
-        
+
         const {
             name,
             base_url,
@@ -176,32 +198,32 @@ const createApiConfig = async (req, res) => {
             rate_limit_per_minute,
             timeout_ms
         } = req.body;
-        
+
         // Validate JSON fields
         let headersJson = null;
         if (headers) {
             try {
                 headersJson = typeof headers === 'string' ? JSON.parse(headers) : headers;
             } catch (e) {
-                return res.status(400).json({ 
-                    success: false, 
-                    message: 'Invalid headers JSON' 
+                return res.status(400).json({
+                    success: false,
+                    message: 'Invalid headers JSON'
                 });
             }
         }
-        
+
         let authConfigJson = null;
         if (auth_config) {
             try {
                 authConfigJson = typeof auth_config === 'string' ? JSON.parse(auth_config) : auth_config;
             } catch (e) {
-                return res.status(400).json({ 
-                    success: false, 
-                    message: 'Invalid auth_config JSON' 
+                return res.status(400).json({
+                    success: false,
+                    message: 'Invalid auth_config JSON'
                 });
             }
         }
-        
+
         const [result] = await pool.query(
             `INSERT INTO api_configurations 
              (name, base_url, endpoint, method, headers, auth_type, auth_config, rate_limit_per_minute, timeout_ms, created_by) 
@@ -219,7 +241,7 @@ const createApiConfig = async (req, res) => {
                 req.user.id
             ]
         );
-        
+
         // Fetch created config
         const [configs] = await pool.query(
             `SELECT ac.*, u.email as created_by_email
@@ -228,7 +250,7 @@ const createApiConfig = async (req, res) => {
              WHERE ac.id = ?`,
             [result.insertId]
         );
-        
+
         res.status(201).json({
             success: true,
             message: 'API configuration created successfully',
@@ -247,13 +269,13 @@ const updateApiConfig = async (req, res) => {
     try {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'Validation failed', 
-                errors: errors.array() 
+            return res.status(400).json({
+                success: false,
+                message: 'Validation failed',
+                errors: errors.array()
             });
         }
-        
+
         const { id } = req.params;
         const {
             name,
@@ -267,92 +289,92 @@ const updateApiConfig = async (req, res) => {
             rate_limit_per_minute,
             timeout_ms
         } = req.body;
-        
+
         const updates = [];
         const values = [];
-        
+
         if (name) {
             updates.push('name = ?');
             values.push(name);
         }
-        
+
         if (base_url) {
             updates.push('base_url = ?');
             values.push(base_url);
         }
-        
+
         if (endpoint !== undefined) {
             updates.push('endpoint = ?');
             values.push(endpoint);
         }
-        
+
         if (method) {
             updates.push('method = ?');
             values.push(method);
         }
-        
+
         if (headers !== undefined) {
             let headersJson;
             try {
                 headersJson = typeof headers === 'string' ? JSON.parse(headers) : headers;
             } catch (e) {
-                return res.status(400).json({ 
-                    success: false, 
-                    message: 'Invalid headers JSON' 
+                return res.status(400).json({
+                    success: false,
+                    message: 'Invalid headers JSON'
                 });
             }
             updates.push('headers = ?');
             values.push(JSON.stringify(headersJson));
         }
-        
+
         if (auth_type !== undefined) {
             updates.push('auth_type = ?');
             values.push(auth_type);
         }
-        
+
         if (auth_config !== undefined) {
             let authConfigJson;
             try {
                 authConfigJson = typeof auth_config === 'string' ? JSON.parse(auth_config) : auth_config;
             } catch (e) {
-                return res.status(400).json({ 
-                    success: false, 
-                    message: 'Invalid auth_config JSON' 
+                return res.status(400).json({
+                    success: false,
+                    message: 'Invalid auth_config JSON'
                 });
             }
             updates.push('auth_config = ?');
             values.push(JSON.stringify(authConfigJson));
         }
-        
+
         if (is_active !== undefined) {
             updates.push('is_active = ?');
             values.push(is_active);
         }
-        
+
         if (rate_limit_per_minute !== undefined) {
             updates.push('rate_limit_per_minute = ?');
             values.push(rate_limit_per_minute);
         }
-        
+
         if (timeout_ms !== undefined) {
             updates.push('timeout_ms = ?');
             values.push(timeout_ms);
         }
-        
+
         if (updates.length === 0) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'No fields to update' 
+            return res.status(400).json({
+                success: false,
+                message: 'No fields to update'
             });
         }
-        
+
         values.push(id);
-        
+
         await pool.query(
             `UPDATE api_configurations SET ${updates.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
             values
         );
-        
+
         // Fetch updated config
         const [configs] = await pool.query(
             `SELECT ac.*, u.email as created_by_email
@@ -361,7 +383,7 @@ const updateApiConfig = async (req, res) => {
              WHERE ac.id = ?`,
             [id]
         );
-        
+
         res.json({
             success: true,
             message: 'API configuration updated successfully',
@@ -379,9 +401,9 @@ const updateApiConfig = async (req, res) => {
 const deleteApiConfig = async (req, res) => {
     try {
         const { id } = req.params;
-        
+
         await pool.query('DELETE FROM api_configurations WHERE id = ?', [id]);
-        
+
         res.json({
             success: true,
             message: 'API configuration deleted successfully'
@@ -406,26 +428,26 @@ const testApiConnection = async (req, res) => {
             auth_config,
             timeout_ms
         } = req.body;
-        
-        console.log('Test API connection request:', { 
-            base_url, 
-            endpoint, 
-            method, 
-            auth_type, 
-            hasHeaders: !!headers, 
+
+        console.log('Test API connection request:', {
+            base_url,
+            endpoint,
+            method,
+            auth_type,
+            hasHeaders: !!headers,
             hasAuthConfig: !!auth_config,
             auth_config: auth_config // Log actual auth config (will be masked in final request log)
         });
-        
+
         if (!base_url || typeof base_url !== 'string' || base_url.trim() === '') {
             return res.status(400).json({
                 success: false,
                 message: 'Base URL is required'
             });
         }
-        
+
         const axios = require('axios');
-        
+
         // Use EXACT URL as provided - NO normalization, NO validation, NO modification
         // If URL is invalid, axios will return the exact error
         let url = base_url.trim();
@@ -433,7 +455,7 @@ const testApiConnection = async (req, res) => {
             // Simple concatenation - user is responsible for correct format
             url = url + endpoint.trim();
         }
-        
+
         // Parse headers - use EXACTLY what user provided
         let headersObj = {};
         if (headers) {
@@ -454,9 +476,9 @@ const testApiConnection = async (req, res) => {
                 });
             }
         }
-        
+
         // NO auto-added headers (Content-Type, etc.) - use ONLY user-provided headers
-        
+
         // Add authentication - use EXACT values (NO defaults)
         // Only process auth if auth_type is provided and not 'none', and auth_config exists
         if (auth_type && auth_type !== 'none' && auth_config && typeof auth_config === 'object' && Object.keys(auth_config).length > 0) {
@@ -473,11 +495,11 @@ const testApiConnection = async (req, res) => {
                 } else {
                     authConfigObj = {};
                 }
-                
+
                 // Use EXACT header name - require it for API key (NO defaults)
                 if (authConfigObj && typeof authConfigObj === 'object' && Object.keys(authConfigObj).length > 0) {
-                    console.log('Processing auth config:', { 
-                        auth_type, 
+                    console.log('Processing auth config:', {
+                        auth_type,
                         hasToken: !!authConfigObj.token,
                         hasKey: !!authConfigObj.key,
                         hasHeaderName: !!authConfigObj.header_name,
@@ -485,7 +507,7 @@ const testApiConnection = async (req, res) => {
                         hasUsername: !!authConfigObj.username,
                         hasPassword: !!authConfigObj.password
                     });
-                    
+
                     if (auth_type === 'bearer' && authConfigObj.token) {
                         headersObj['Authorization'] = `Bearer ${authConfigObj.token}`;
                         console.log('Added Bearer token to headers');
@@ -523,7 +545,7 @@ const testApiConnection = async (req, res) => {
                 });
             }
         }
-        
+
         // Log request (mask sensitive values for logging only)
         const logHeaders = { ...headersObj };
         Object.keys(logHeaders).forEach(key => {
@@ -533,7 +555,7 @@ const testApiConnection = async (req, res) => {
             }
         });
         // Log will show requestMethod after validation
-        
+
         // Use EXACT method from user - NO default fallback
         const requestMethod = method && method.trim() !== '' ? method.trim().toUpperCase() : null;
         if (!requestMethod) {
@@ -542,7 +564,7 @@ const testApiConnection = async (req, res) => {
                 message: 'HTTP method is required'
             });
         }
-        
+
         // Use EXACT timeout from user - NO default fallback
         const requestTimeout = timeout_ms && timeout_ms > 0 ? timeout_ms : null;
         if (!requestTimeout) {
@@ -551,7 +573,7 @@ const testApiConnection = async (req, res) => {
                 message: 'Timeout is required'
             });
         }
-        
+
         try {
             const response = await axios({
                 method: requestMethod,
@@ -560,12 +582,12 @@ const testApiConnection = async (req, res) => {
                 timeout: requestTimeout,
                 validateStatus: () => true // Return exact status
             });
-            
+
             // Return EXACT response - no masking
             return res.json({
                 success: response.status >= 200 && response.status < 300,
-                message: response.status >= 200 && response.status < 300 
-                    ? `Connection successful! API returned ${response.status}` 
+                message: response.status >= 200 && response.status < 300
+                    ? `Connection successful! API returned ${response.status}`
                     : `API returned ${response.status}: ${response.statusText || 'Error'}`,
                 data: {
                     status: response.status,
@@ -583,7 +605,7 @@ const testApiConnection = async (req, res) => {
                 code: error.code,
                 message: error.message
             };
-            
+
             if (error.response) {
                 errorMessage = `API returned ${error.response.status}: ${error.response.statusText || error.message}`;
                 errorDetails = {
@@ -603,7 +625,7 @@ const testApiConnection = async (req, res) => {
             } else if (error.code === 'EINVAL') {
                 errorMessage = 'Invalid URL format';
             }
-            
+
             return res.json({
                 success: false,
                 message: errorMessage,
@@ -628,7 +650,7 @@ const getAuditLogs = async (req, res) => {
     try {
         const { page = 1, limit = 50, action, resource_type, user_id } = req.query;
         const offset = (page - 1) * limit;
-        
+
         let query = `
             SELECT al.*, u.email as user_email, u.first_name, u.last_name
             FROM audit_logs al
@@ -636,31 +658,31 @@ const getAuditLogs = async (req, res) => {
             WHERE 1=1
         `;
         const params = [];
-        
+
         if (action) {
             query += ' AND al.action = ?';
             params.push(action);
         }
-        
+
         if (resource_type) {
             query += ' AND al.resource_type = ?';
             params.push(resource_type);
         }
-        
+
         if (user_id) {
             query += ' AND al.user_id = ?';
             params.push(user_id);
         }
-        
+
         query += ' ORDER BY al.created_at DESC LIMIT ? OFFSET ?';
         params.push(parseInt(limit), offset);
-        
+
         const [logs] = await pool.query(query, params);
-        
+
         // Get total count
         let countQuery = 'SELECT COUNT(*) as total FROM audit_logs WHERE 1=1';
         const countParams = [];
-        
+
         if (action) {
             countQuery += ' AND action = ?';
             countParams.push(action);
@@ -673,10 +695,10 @@ const getAuditLogs = async (req, res) => {
             countQuery += ' AND user_id = ?';
             countParams.push(user_id);
         }
-        
+
         const [countResult] = await pool.query(countQuery, countParams);
         const total = countResult[0].total;
-        
+
         res.json({
             success: true,
             data: logs,
@@ -693,6 +715,123 @@ const getAuditLogs = async (req, res) => {
     }
 };
 
+/**
+ * Get all organization users from Microsoft Graph (admin only)
+ * Follows pagination to fetch all users.
+ */
+const getOrganizationUsers = async (req, res) => {
+    try {
+        const token = await getGraphToken();
+        const graphUsers = [];
+        let nextLink = 'https://graph.microsoft.com/v1.0/users?$select=id,displayName,mail,userPrincipalName,givenName,surname&$top=999';
+
+        while (nextLink) {
+            const graphRes = await axios.get(nextLink, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            const page = graphRes.data.value || [];
+            graphUsers.push(...page);
+            nextLink = graphRes.data['@odata.nextLink'] || null;
+        }
+
+        const [localUsers] = await pool.query(
+            'SELECT id, email, azure_oid, first_name, last_name, role_id FROM users'
+        );
+        const byAzureOid = new Map(localUsers.map((u) => [u.azure_oid, u]));
+        const byEmail = new Map(localUsers.map((u) => [u.email?.toLowerCase(), u]));
+
+        const combined = graphUsers.map((gu) => {
+            const email = gu.mail || gu.userPrincipalName || '';
+            const local = byAzureOid.get(gu.id) || byEmail.get(email?.toLowerCase());
+            return {
+                id: gu.id,
+                displayName: gu.displayName,
+                mail: gu.mail,
+                userPrincipalName: gu.userPrincipalName,
+                givenName: gu.givenName || '',
+                surname: gu.surname || '',
+                inCacheBi: !!local,
+                cacheBiUserId: local?.id,
+                cacheBiRoleId: local?.role_id,
+            };
+        });
+
+        res.json({ success: true, data: combined });
+    } catch (error) {
+        console.error('Get organization users error:', error);
+        const msg = error.response?.data?.error?.message || error.message;
+        res.status(500).json({ success: false, message: msg || 'Error fetching organization users' });
+    }
+};
+
+/**
+ * Assign org user to Cache BI with role (admin only)
+ */
+const assignOrganizationUser = async (req, res) => {
+    try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            const first = errors.array()[0];
+            return res.status(400).json({
+                success: false,
+                message: first?.msg || 'Validation failed',
+                errors: errors.array(),
+            });
+        }
+
+        const { azure_oid, email, first_name, last_name, role_id } = req.body;
+
+        if (!email || !email.trim()) {
+            return res.status(400).json({ success: false, message: 'Email is required' });
+        }
+        const emailTrimmed = email.trim();
+
+        const [existing] = await pool.query(
+            'SELECT id FROM users WHERE azure_oid = ? OR LOWER(email) = LOWER(?)',
+            [azure_oid, emailTrimmed]
+        );
+        if (existing.length > 0) {
+            return res.status(400).json({ success: false, message: 'User already exists in Cache BI' });
+        }
+
+        await pool.query(
+            `INSERT INTO users (email, azure_oid, password_hash, first_name, last_name, role_id) 
+             VALUES (?, ?, '', ?, ?, ?)`,
+            [emailTrimmed, azure_oid, (first_name || '').trim() || 'User', (last_name || '').trim() || '', role_id]
+        );
+
+        res.json({ success: true, message: 'User assigned successfully' });
+    } catch (error) {
+        console.error('Assign organization user error:', error);
+        const isDup = error.code === 'ER_DUP_ENTRY' || error.errno === 1062;
+        const msg = isDup ? 'User already exists in Cache BI' : (error.message || 'Error assigning user');
+        res.status(isDup ? 400 : 500).json({ success: false, message: msg });
+    }
+};
+
+/**
+ * Update role of existing Cache BI user (admin only)
+ */
+const updateOrganizationUserRole = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { role_id } = req.body;
+        if (!role_id || ![1, 2, 3].includes(Number(role_id))) {
+            return res.status(400).json({ success: false, message: 'Invalid role_id (1=admin, 2=developer, 3=viewer)' });
+        }
+
+        const [result] = await pool.query('UPDATE users SET role_id = ? WHERE id = ?', [role_id, id]);
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        res.json({ success: true, message: 'Role updated successfully' });
+    } catch (error) {
+        console.error('Update organization user role error:', error);
+        res.status(500).json({ success: false, message: 'Error updating role' });
+    }
+};
+
 module.exports = {
     getApiConfigs,
     getApiConfigById,
@@ -700,5 +839,8 @@ module.exports = {
     updateApiConfig,
     deleteApiConfig,
     testApiConnection,
-    getAuditLogs
+    getAuditLogs,
+    getOrganizationUsers,
+    assignOrganizationUser,
+    updateOrganizationUserRole,
 };

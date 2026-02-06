@@ -18,6 +18,17 @@ import EditDatasetModal from './EditDatasetModal';
 import { useTheme } from '../../contexts/ThemeContext';
 import { getThemeColors, getColorPalette } from '../../lib/themeColors';
 
+// Mobile detection hook
+function useIsMobile(breakpoint = 768) {
+  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' && window.innerWidth < breakpoint);
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < breakpoint);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [breakpoint]);
+  return isMobile;
+}
+
 interface Dataset {
   id: number;
   name: string;
@@ -65,6 +76,7 @@ export default function DataSourceManagement() {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
   const palette = getColorPalette(isDark);
+  const isMobile = useIsMobile();
 
   const [dataSources, setDataSources] = useState<DataSourceItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -466,54 +478,54 @@ export default function DataSourceManagement() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ display: 'flex', alignItems: isMobile ? 'flex-start' : 'center', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', gap: isMobile ? '8px' : '0' }}>
         <div>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 600, color: colors.text, marginBottom: '0.25rem' }}>Data Source Management</h2>
-          <p style={{ color: colors.muted }}>Connect and manage your data sources</p>
+          <h2 style={{ fontSize: isMobile ? '1.25rem' : '1.5rem', fontWeight: 600, color: colors.text, marginBottom: '0.25rem' }}>Data Source Management</h2>
+          <p style={{ color: colors.muted, fontSize: isMobile ? '0.875rem' : '1rem' }}>Connect and manage your data sources</p>
         </div>
       </div>
 
       {/* Global errors removed - errors shown only below data source names */}
 
       {/* Connection Options */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: '1rem' }}>
         <button
           onClick={() => setShowZohoModal(true)}
-          style={{ backgroundColor: colors.cardBg, borderRadius: '0.75rem', padding: '1.5rem', boxShadow: colors.cardShadow, border: `2px solid ${colors.cardBorder}`, textAlign: 'left', cursor: 'pointer', transition: 'border-color 0.2s' }}
+          style={{ backgroundColor: colors.cardBg, borderRadius: '0.75rem', padding: isMobile ? '1rem' : '1.5rem', boxShadow: colors.cardShadow, border: `2px solid ${colors.cardBorder}`, textAlign: 'left', cursor: 'pointer', transition: 'border-color 0.2s' }}
           onMouseOver={(e) => e.currentTarget.style.borderColor = '#ef4444'}
           onMouseOut={(e) => e.currentTarget.style.borderColor = colors.cardBorder}
         >
-          <div style={{ backgroundColor: palette.purple.bg, width: '3rem', height: '3rem', borderRadius: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1rem' }}>
-            <Database style={{ width: '1.5rem', height: '1.5rem', color: palette.purple.text }} />
+          <div style={{ backgroundColor: palette.purple.bg, width: isMobile ? '2.5rem' : '3rem', height: isMobile ? '2.5rem' : '3rem', borderRadius: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: isMobile ? '0.75rem' : '1rem' }}>
+            <Database style={{ width: isMobile ? '1.25rem' : '1.5rem', height: isMobile ? '1.25rem' : '1.5rem', color: palette.purple.text }} />
           </div>
-          <h3 style={{ fontWeight: 600, color: colors.text, marginBottom: '0.25rem' }}>Connect Zoho API</h3>
-          <p style={{ fontSize: '0.875rem', color: colors.muted }}>Integrate with Zoho CRM, Books, and more</p>
+          <h3 style={{ fontWeight: 600, color: colors.text, marginBottom: '0.25rem', fontSize: isMobile ? '0.9375rem' : '1rem' }}>Connect Zoho API</h3>
+          <p style={{ fontSize: isMobile ? '0.8125rem' : '0.875rem', color: colors.muted }}>Integrate with Zoho CRM, Books, and more</p>
         </button>
 
         <button
           onClick={() => setShowAPIModal(true)}
-          style={{ backgroundColor: colors.cardBg, borderRadius: '0.75rem', padding: '1.5rem', boxShadow: colors.cardShadow, border: `2px solid ${colors.cardBorder}`, textAlign: 'left', cursor: 'pointer', transition: 'border-color 0.2s' }}
+          style={{ backgroundColor: colors.cardBg, borderRadius: '0.75rem', padding: isMobile ? '1rem' : '1.5rem', boxShadow: colors.cardShadow, border: `2px solid ${colors.cardBorder}`, textAlign: 'left', cursor: 'pointer', transition: 'border-color 0.2s' }}
           onMouseOver={(e) => e.currentTarget.style.borderColor = '#ef4444'}
           onMouseOut={(e) => e.currentTarget.style.borderColor = colors.cardBorder}
         >
-          <div style={{ backgroundColor: palette.blue.bg, width: '3rem', height: '3rem', borderRadius: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1rem' }}>
-            <Link2 style={{ width: '1.5rem', height: '1.5rem', color: palette.blue.text }} />
+          <div style={{ backgroundColor: palette.blue.bg, width: isMobile ? '2.5rem' : '3rem', height: isMobile ? '2.5rem' : '3rem', borderRadius: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: isMobile ? '0.75rem' : '1rem' }}>
+            <Link2 style={{ width: isMobile ? '1.25rem' : '1.5rem', height: isMobile ? '1.25rem' : '1.5rem', color: palette.blue.text }} />
           </div>
-          <h3 style={{ fontWeight: 600, color: colors.text, marginBottom: '0.25rem' }}>Configure API Connection</h3>
-          <p style={{ fontSize: '0.875rem', color: colors.muted }}>Connect to any REST API with custom configuration</p>
+          <h3 style={{ fontWeight: 600, color: colors.text, marginBottom: '0.25rem', fontSize: isMobile ? '0.9375rem' : '1rem' }}>Configure API Connection</h3>
+          <p style={{ fontSize: isMobile ? '0.8125rem' : '0.875rem', color: colors.muted }}>Connect to any REST API with custom configuration</p>
         </button>
 
         <button
           onClick={() => setShowFileModal(true)}
-          style={{ backgroundColor: colors.cardBg, borderRadius: '0.75rem', padding: '1.5rem', boxShadow: colors.cardShadow, border: `2px solid ${colors.cardBorder}`, textAlign: 'left', cursor: 'pointer', transition: 'border-color 0.2s' }}
+          style={{ backgroundColor: colors.cardBg, borderRadius: '0.75rem', padding: isMobile ? '1rem' : '1.5rem', boxShadow: colors.cardShadow, border: `2px solid ${colors.cardBorder}`, textAlign: 'left', cursor: 'pointer', transition: 'border-color 0.2s' }}
           onMouseOver={(e) => e.currentTarget.style.borderColor = '#ef4444'}
           onMouseOut={(e) => e.currentTarget.style.borderColor = colors.cardBorder}
         >
-          <div style={{ backgroundColor: palette.green.bg, width: '3rem', height: '3rem', borderRadius: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1rem' }}>
-            <Upload style={{ width: '1.5rem', height: '1.5rem', color: palette.green.text }} />
+          <div style={{ backgroundColor: palette.green.bg, width: isMobile ? '2.5rem' : '3rem', height: isMobile ? '2.5rem' : '3rem', borderRadius: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: isMobile ? '0.75rem' : '1rem' }}>
+            <Upload style={{ width: isMobile ? '1.25rem' : '1.5rem', height: isMobile ? '1.25rem' : '1.5rem', color: palette.green.text }} />
           </div>
-          <h3 style={{ fontWeight: 600, color: colors.text, marginBottom: '0.25rem' }}>Upload Data File</h3>
-          <p style={{ fontSize: '0.875rem', color: colors.muted }}>Import from Excel or CSV</p>
+          <h3 style={{ fontWeight: 600, color: colors.text, marginBottom: '0.25rem', fontSize: isMobile ? '0.9375rem' : '1rem' }}>Upload Data File</h3>
+          <p style={{ fontSize: isMobile ? '0.8125rem' : '0.875rem', color: colors.muted }}>Import from Excel or CSV</p>
         </button>
       </div>
 
@@ -591,8 +603,8 @@ export default function DataSourceManagement() {
                               fontSize: '0.75rem',
                               fontWeight: 500,
                               borderRadius: '9999px',
-                              backgroundColor: getTypeLabel(d.source_type) === 'API' ? palette.blue.bg : getTypeLabel(d.source_type) === 'Zoho' ? palette.purple.bg : palette.green.bg,
-                              color: getTypeLabel(d.source_type) === 'API' ? palette.blue.text : getTypeLabel(d.source_type) === 'Zoho' ? palette.purple.text : palette.green.text
+                              backgroundColor: getTypeLabel(d.source_type) === 'API' ? palette.blue.bg : (getTypeLabel(d.source_type) as string) === 'Zoho' ? palette.purple.bg : palette.green.bg,
+                              color: getTypeLabel(d.source_type) === 'API' ? palette.blue.text : (getTypeLabel(d.source_type) as string) === 'Zoho' ? palette.purple.text : palette.green.text
                             }}
                           >
                             {getTypeLabel(d.source_type)}

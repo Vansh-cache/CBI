@@ -40,6 +40,7 @@ export interface Widget {
   showDataLabels?: boolean;
   showLegend?: boolean;
   showGridLines?: boolean;
+  slicerStyle?: 'dropdown' | 'tile' | 'list'; // Slicer display style
 
   // Locked state (from alignment tools)
   locked?: boolean;
@@ -50,6 +51,7 @@ export type RenderWidgetOptions = {
   onSlicerChange?: (value: string, selected: boolean) => void;
   onDataPointClick?: (field: string, value: unknown) => void;
   animations?: boolean;
+  isMobile?: boolean;
 };
 
 /** For card/KPI value from raw data. Used by builder and elsewhere. */
@@ -99,16 +101,20 @@ export function renderWidget(
     size: widget.size,
     aggregation: widget.aggregation,
     field: widget.field,
-    xAxis: widget.xAxis,
-    yAxis: widget.yAxis,
-    legend: widget.legend,
-    filterField: widget.filterField,
+    xAxis: (widget as any).xAxisFields?.[0] ?? widget.xAxis,
+    yAxis: (widget as any).yAxisFields?.[0] ?? widget.yAxis,
+    legend: (widget as any).legendFields?.[0] ?? widget.legend,
+    filterField: (widget as any).filterFields?.[0] ?? widget.filterField,
     selectedFilters: widget.selectedFilters,
     datasetId: widget.datasetId,
     accentColor: widget.accentColor,
     valueFormat: widget.valueFormat,
+    slicerStyle: widget.slicerStyle,
     dimensions: widget.dimensions,
     measures: widget.measures,
+    xAxisFields: (widget as any).xAxisFields,
+    yAxisFields: (widget as any).yAxisFields,
+    legendFields: (widget as any).legendFields,
     xAxisAggregation: (widget as any).xAxisAggregation,
     yAxisAggregation: (widget as any).yAxisAggregation,
     legendAggregation: (widget as any).legendAggregation,

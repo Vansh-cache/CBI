@@ -1,8 +1,19 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, CheckCircle, AlertCircle, Loader2, Link2 } from 'lucide-react';
 import { apiPost } from '../../lib/api';
 import { useTheme } from '../../contexts/ThemeContext';
 import { getThemeColors, getColorPalette } from '../../lib/themeColors';
+
+// Mobile detection hook
+function useIsMobile(breakpoint = 768) {
+  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' && window.innerWidth < breakpoint);
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < breakpoint);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [breakpoint]);
+  return isMobile;
+}
 
 interface ZohoAPIModalProps {
   isOpen: boolean;
@@ -14,6 +25,7 @@ export default function ZohoAPIModal({ isOpen, onClose, onSave }: ZohoAPIModalPr
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
   const palette = getColorPalette(isDark);
+  const isMobile = useIsMobile();
 
   const [formData, setFormData] = useState({
     name: '',
@@ -232,13 +244,13 @@ export default function ZohoAPIModal({ isOpen, onClose, onSave }: ZohoAPIModalPr
   };
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.5)', padding: '1rem' }}>
-      <div style={{ backgroundColor: colors.cardBg, borderRadius: '0.5rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', width: '100%', maxWidth: '42rem', maxHeight: '90vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.5)', padding: isMobile ? '0' : '1rem' }}>
+      <div style={{ backgroundColor: colors.cardBg, borderRadius: isMobile ? '1rem 1rem 0 0' : '0.5rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', width: '100%', maxWidth: isMobile ? '100%' : '42rem', maxHeight: isMobile ? '95vh' : '90vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem 1.5rem', borderBottom: `1px solid ${colors.cardBorder}` }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: isMobile ? '1rem' : '1rem 1.5rem', borderBottom: `1px solid ${colors.cardBorder}` }}>
           <div>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: colors.text }}>Connect Zoho API</h2>
-            <p style={{ fontSize: '0.875rem', color: colors.muted, marginTop: '0.25rem' }}>Configure Zoho service integration</p>
+            <h2 style={{ fontSize: isMobile ? '1.0625rem' : '1.25rem', fontWeight: 600, color: colors.text }}>Connect Zoho API</h2>
+            {!isMobile && <p style={{ fontSize: '0.875rem', color: colors.muted, marginTop: '0.25rem' }}>Configure Zoho service integration</p>}
           </div>
           <button
             onClick={onClose}
@@ -249,7 +261,7 @@ export default function ZohoAPIModal({ isOpen, onClose, onSave }: ZohoAPIModalPr
         </div>
 
         {/* Content - Scrollable */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: isMobile ? '1rem' : '1.5rem', display: 'flex', flexDirection: 'column', gap: isMobile ? '1rem' : '1.5rem' }}>
           {/* Basic Info */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <h3 style={{ fontWeight: 600, color: colors.text }}>Basic Information</h3>
@@ -438,43 +450,47 @@ export default function ZohoAPIModal({ isOpen, onClose, onSave }: ZohoAPIModalPr
         </div>
 
         {/* Footer */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem 1.5rem', borderTop: `1px solid ${colors.cardBorder}`, backgroundColor: colors.tableBg }}>
+        <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'stretch' : 'center', justifyContent: 'space-between', padding: isMobile ? '1rem' : '1rem 1.5rem', borderTop: `1px solid ${colors.cardBorder}`, backgroundColor: colors.tableBg, gap: isMobile ? '0.75rem' : '0' }}>
           <button
             onClick={handleTestConnection}
             disabled={testStatus === 'loading'}
-            style={{ padding: '0.5rem 1rem', color: '#ef4444', border: '1px solid #ef4444', borderRadius: '0.5rem', backgroundColor: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: testStatus === 'loading' ? 0.5 : 1, transition: 'background-color 0.2s' }}
+            style={{ padding: isMobile ? '0.75rem 1rem' : '0.5rem 1rem', color: '#ef4444', border: '1px solid #ef4444', borderRadius: '0.5rem', backgroundColor: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', opacity: testStatus === 'loading' ? 0.5 : 1, transition: 'background-color 0.2s', fontSize: isMobile ? '0.9375rem' : '1rem' }}
           >
             {testStatus === 'loading' ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
               <Link2 className="w-4 h-4" />
             )}
-            Test Connection
+            Test
           </button>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <button
-              onClick={onClose}
-              disabled={saving || savingDraft}
-              style={{ padding: '0.5rem 1rem', color: colors.text, backgroundColor: 'transparent', border: 'none', borderRadius: '0.5rem', cursor: 'pointer', opacity: (saving || savingDraft) ? 0.5 : 1, transition: 'background-color 0.2s' }}
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleSaveDraft}
-              disabled={saving || savingDraft}
-              style={{ padding: '0.5rem 1rem', color: colors.muted, border: `1px solid ${colors.inputBorder}`, borderRadius: '0.5rem', backgroundColor: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: (saving || savingDraft) ? 0.5 : 1, transition: 'background-color 0.2s' }}
-            >
-              {savingDraft && <Loader2 className="w-4 h-4 animate-spin" />}
-              Save as Draft
-            </button>
+          <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: 'center', gap: '0.75rem' }}>
+            {!isMobile && (
+              <button
+                onClick={onClose}
+                disabled={saving || savingDraft}
+                style={{ padding: '0.5rem 1rem', color: colors.text, backgroundColor: 'transparent', border: 'none', borderRadius: '0.5rem', cursor: 'pointer', opacity: (saving || savingDraft) ? 0.5 : 1, transition: 'background-color 0.2s' }}
+              >
+                Cancel
+              </button>
+            )}
+            {!isMobile && (
+              <button
+                onClick={handleSaveDraft}
+                disabled={saving || savingDraft}
+                style={{ padding: '0.5rem 1rem', color: colors.muted, border: `1px solid ${colors.inputBorder}`, borderRadius: '0.5rem', backgroundColor: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: (saving || savingDraft) ? 0.5 : 1, transition: 'background-color 0.2s' }}
+              >
+                {savingDraft && <Loader2 className="w-4 h-4 animate-spin" />}
+                Save as Draft
+              </button>
+            )}
             <button
               onClick={handleSave}
               disabled={saving || savingDraft}
-              style={{ padding: '0.5rem 1rem', backgroundColor: '#ef4444', color: 'white', borderRadius: '0.5rem', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: (saving || savingDraft) ? 0.5 : 1, transition: 'background-color 0.2s' }}
+              style={{ padding: isMobile ? '0.75rem 1rem' : '0.5rem 1rem', backgroundColor: '#ef4444', color: 'white', borderRadius: '0.5rem', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', opacity: (saving || savingDraft) ? 0.5 : 1, transition: 'background-color 0.2s', width: isMobile ? '100%' : 'auto', fontSize: isMobile ? '0.9375rem' : '1rem' }}
             >
               {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-              Save & Fetch Data
+              Save & Fetch
             </button>
           </div>
         </div>

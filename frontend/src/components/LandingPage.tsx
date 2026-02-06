@@ -1,13 +1,26 @@
 import { Link } from 'react-router';
 import { useState, useEffect } from 'react';
-import { LayoutDashboard, Shield, Code, Eye, ArrowRight, BarChart3, Zap, Lock, Globe, ChevronDown, Sparkles, TrendingUp, Users } from 'lucide-react';
+import { LayoutDashboard, Shield, Code, Eye, ArrowRight, BarChart3, Zap, Lock, Globe, ChevronDown, Sparkles, TrendingUp, Users, Menu, X } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import ThemeToggle from './shared/ThemeToggle';
+
+// Mobile detection hook
+function useIsMobile(breakpoint = 768) {
+  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' && window.innerWidth < breakpoint);
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < breakpoint);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [breakpoint]);
+  return isMobile;
+}
 
 export default function LandingPage() {
   const [scrollY, setScrollY] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { isDark } = useTheme();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     setIsVisible(true);
@@ -151,7 +164,7 @@ export default function LandingPage() {
         left: 0,
         right: 0,
         zIndex: 50,
-        padding: '1rem 2rem',
+        padding: isMobile ? '0.75rem 1rem' : '1rem 2rem',
         background: scrollY > 50 ? colors.navBg : 'transparent',
         backdropFilter: scrollY > 50 ? 'blur(20px)' : 'none',
         borderBottom: scrollY > 50 ? `1px solid ${colors.navBorder}` : 'none',
@@ -161,51 +174,103 @@ export default function LandingPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', animation: 'slideIn 0.6s ease-out' }}>
             <div style={{
               background: 'linear-gradient(135deg, #ef4444, #f97316)',
-              padding: '10px',
+              padding: isMobile ? '8px' : '10px',
               borderRadius: '12px',
               boxShadow: '0 4px 15px rgba(239, 68, 68, 0.4)',
             }}>
-              <LayoutDashboard style={{ width: '24px', height: '24px', color: 'white' }} />
+              <LayoutDashboard style={{ width: isMobile ? '20px' : '24px', height: isMobile ? '20px' : '24px', color: 'white' }} />
             </div>
-            <span style={{ fontSize: '1.5rem', fontWeight: 700, color: colors.text, letterSpacing: '-0.5px' }}>
+            <span style={{ fontSize: isMobile ? '1.25rem' : '1.5rem', fontWeight: 700, color: colors.text, letterSpacing: '-0.5px' }}>
               Cache BI
             </span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-            <ThemeToggle size="sm" />
+          {/* Desktop nav */}
+          {!isMobile && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+              <ThemeToggle size="sm" />
+              <Link
+                to="/login"
+                style={{
+                  padding: '12px 28px',
+                  background: 'linear-gradient(135deg, #ef4444, #f97316)',
+                  color: 'white',
+                  borderRadius: '50px',
+                  fontWeight: 600,
+                  textDecoration: 'none',
+                  boxShadow: '0 4px 15px rgba(239, 68, 68, 0.4)',
+                  transition: 'all 0.35s cubic-bezier(0.33, 1, 0.68, 1)',
+                  animation: 'slideIn 0.6s ease-out 0.2s backwards',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'scale(1.05)';
+                  e.currentTarget.style.boxShadow = '0 6px 25px rgba(239, 68, 68, 0.6)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'scale(1)';
+                  e.currentTarget.style.boxShadow = '0 4px 15px rgba(239, 68, 68, 0.4)';
+                }}
+              >
+                Sign In
+              </Link>
+            </div>
+          )}
+          {/* Mobile hamburger */}
+          {isMobile && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <ThemeToggle size="sm" />
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: colors.text,
+                  cursor: 'pointer',
+                  padding: '8px',
+                }}
+              >
+                {mobileMenuOpen ? <X style={{ width: '24px', height: '24px' }} /> : <Menu style={{ width: '24px', height: '24px' }} />}
+              </button>
+            </div>
+          )}
+        </div>
+        {/* Mobile menu dropdown */}
+        {isMobile && mobileMenuOpen && (
+          <div style={{
+            position: 'absolute',
+            top: '100%',
+            left: 0,
+            right: 0,
+            background: colors.navBg,
+            backdropFilter: 'blur(20px)',
+            borderBottom: `1px solid ${colors.navBorder}`,
+            padding: '1rem',
+          }}>
             <Link
               to="/login"
+              onClick={() => setMobileMenuOpen(false)}
               style={{
-                padding: '12px 28px',
+                display: 'block',
+                padding: '12px 20px',
                 background: 'linear-gradient(135deg, #ef4444, #f97316)',
                 color: 'white',
-                borderRadius: '50px',
+                borderRadius: '12px',
                 fontWeight: 600,
                 textDecoration: 'none',
+                textAlign: 'center',
                 boxShadow: '0 4px 15px rgba(239, 68, 68, 0.4)',
-                transition: 'all 0.35s cubic-bezier(0.33, 1, 0.68, 1)',
-                animation: 'slideIn 0.6s ease-out 0.2s backwards',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'scale(1.05)';
-                e.currentTarget.style.boxShadow = '0 6px 25px rgba(239, 68, 68, 0.6)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'scale(1)';
-                e.currentTarget.style.boxShadow = '0 4px 15px rgba(239, 68, 68, 0.4)';
               }}
             >
               Sign In
             </Link>
           </div>
-        </div>
+        )}
       </nav>
 
       {/* Hero Section */}
       <section style={{
         position: 'relative',
         zIndex: 10,
-        padding: '160px 24px 100px',
+        padding: isMobile ? '120px 16px 60px' : '160px 24px 100px',
         minHeight: '100vh',
         display: 'flex',
         alignItems: 'center',
@@ -250,12 +315,13 @@ export default function LandingPage() {
 
           {/* Subtitle */}
           <p style={{
-            fontSize: '1.25rem',
+            fontSize: isMobile ? '1rem' : '1.25rem',
             color: colors.textMuted,
             maxWidth: '640px',
             margin: '0 auto 48px',
             lineHeight: 1.7,
             animation: isVisible ? 'slideUp 0.8s ease-out 0.2s backwards' : 'none',
+            padding: isMobile ? '0 8px' : 0,
           }}>
             Transform your data into actionable insights with our comprehensive analytics and management platform. Built for teams of all sizes.
           </p>
@@ -263,11 +329,13 @@ export default function LandingPage() {
           {/* CTA Buttons */}
           <div style={{
             display: 'flex',
+            flexDirection: isMobile ? 'column' : 'row',
             flexWrap: 'wrap',
             justifyContent: 'center',
             gap: '16px',
-            marginBottom: '60px',
+            marginBottom: isMobile ? '40px' : '60px',
             animation: isVisible ? 'slideUp 0.8s ease-out 0.3s backwards' : 'none',
+            padding: isMobile ? '0 16px' : 0,
           }}>
             <Link
               to="/login"
@@ -275,16 +343,18 @@ export default function LandingPage() {
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
+                justifyContent: 'center',
                 gap: '8px',
-                padding: '18px 36px',
+                padding: isMobile ? '14px 28px' : '18px 36px',
                 background: 'linear-gradient(135deg, #ef4444, #f97316)',
                 color: 'white',
                 borderRadius: '14px',
                 fontWeight: 600,
-                fontSize: '1.1rem',
+                fontSize: isMobile ? '1rem' : '1.1rem',
                 textDecoration: 'none',
                 boxShadow: '0 8px 30px rgba(239, 68, 68, 0.4)',
                 transition: 'all 0.35s cubic-bezier(0.33, 1, 0.68, 1)',
+                width: isMobile ? '100%' : 'auto',
               }}
             >
               Get Started Free
@@ -295,16 +365,18 @@ export default function LandingPage() {
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
+                justifyContent: 'center',
                 gap: '8px',
-                padding: '18px 36px',
+                padding: isMobile ? '14px 28px' : '18px 36px',
                 background: colors.cardBg,
                 border: `1px solid ${colors.cardBorder}`,
                 color: colors.text,
                 borderRadius: '14px',
                 fontWeight: 600,
-                fontSize: '1.1rem',
+                fontSize: isMobile ? '1rem' : '1.1rem',
                 textDecoration: 'none',
                 transition: 'all 0.35s cubic-bezier(0.33, 1, 0.68, 1)',
+                width: isMobile ? '100%' : 'auto',
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.background = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)';
@@ -324,7 +396,7 @@ export default function LandingPage() {
           <div style={{
             display: 'flex',
             justifyContent: 'center',
-            gap: '60px',
+            gap: isMobile ? '24px' : '60px',
             flexWrap: 'wrap',
             animation: isVisible ? 'fadeIn 1s ease-out 0.5s backwards' : 'none',
           }}>
@@ -333,9 +405,9 @@ export default function LandingPage() {
               { icon: BarChart3, label: '1M+ Charts', color: '#f97316' },
               { icon: TrendingUp, label: '99.9% Uptime', color: '#ef4444' },
             ].map((stat, i) => (
-              <div key={i} style={{ textAlign: 'center' }}>
-                <stat.icon style={{ width: '28px', height: '28px', color: stat.color, margin: '0 auto 8px' }} />
-                <div style={{ color: colors.text, fontWeight: 700, fontSize: '1.1rem' }}>{stat.label}</div>
+              <div key={i} style={{ textAlign: 'center', minWidth: isMobile ? '80px' : 'auto' }}>
+                <stat.icon style={{ width: isMobile ? '24px' : '28px', height: isMobile ? '24px' : '28px', color: stat.color, margin: '0 auto 8px' }} />
+                <div style={{ color: colors.text, fontWeight: 700, fontSize: isMobile ? '0.9rem' : '1.1rem' }}>{stat.label}</div>
               </div>
             ))}
           </div>
@@ -346,20 +418,20 @@ export default function LandingPage() {
       <section id="features" style={{
         position: 'relative',
         zIndex: 10,
-        padding: '100px 24px',
+        padding: isMobile ? '60px 16px' : '100px 24px',
         background: isDark ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.03)',
       }}>
         <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: '64px' }}>
-            <h2 style={{ fontSize: '2.5rem', fontWeight: 700, color: colors.text, marginBottom: '16px' }}>
+          <div style={{ textAlign: 'center', marginBottom: isMobile ? '40px' : '64px' }}>
+            <h2 style={{ fontSize: isMobile ? '1.75rem' : '2.5rem', fontWeight: 700, color: colors.text, marginBottom: '16px' }}>
               Everything You Need
             </h2>
-            <p style={{ color: colors.textMuted, fontSize: '1.1rem', maxWidth: '500px', margin: '0 auto' }}>
+            <p style={{ color: colors.textMuted, fontSize: isMobile ? '1rem' : '1.1rem', maxWidth: '500px', margin: '0 auto', padding: isMobile ? '0 8px' : 0 }}>
               A complete suite of tools for data visualization, management, and collaboration
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(280px, 1fr))', gap: isMobile ? '16px' : '24px' }}>
             {[
               { icon: BarChart3, title: 'Interactive Charts', desc: 'Build stunning visualizations with our drag-and-drop dashboard builder', color: '#ef4444' },
               { icon: Globe, title: 'API Integration', desc: 'Connect to any data source with our flexible API configuration', color: '#f97316' },
@@ -407,19 +479,19 @@ export default function LandingPage() {
       <section style={{
         position: 'relative',
         zIndex: 10,
-        padding: '100px 24px',
+        padding: isMobile ? '60px 16px' : '100px 24px',
       }}>
         <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: '64px' }}>
-            <h2 style={{ fontSize: '2.5rem', fontWeight: 700, color: colors.text, marginBottom: '16px' }}>
+          <div style={{ textAlign: 'center', marginBottom: isMobile ? '40px' : '64px' }}>
+            <h2 style={{ fontSize: isMobile ? '1.75rem' : '2.5rem', fontWeight: 700, color: colors.text, marginBottom: '16px' }}>
               Three Powerful Portals
             </h2>
-            <p style={{ color: colors.textMuted, fontSize: '1.1rem', maxWidth: '500px', margin: '0 auto' }}>
+            <p style={{ color: colors.textMuted, fontSize: isMobile ? '1rem' : '1.1rem', maxWidth: '500px', margin: '0 auto', padding: isMobile ? '0 8px' : 0 }}>
               Different interfaces designed for different roles, all working together seamlessly
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '32px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(320px, 1fr))', gap: isMobile ? '20px' : '32px' }}>
             {[
               {
                 icon: Shield,
@@ -506,7 +578,7 @@ export default function LandingPage() {
           </div>
 
           {/* CTA */}
-          <div style={{ textAlign: 'center', marginTop: '64px' }}>
+          <div style={{ textAlign: 'center', marginTop: isMobile ? '40px' : '64px' }}>
             <Link
               to="/login"
               className="hover-glow"
@@ -514,12 +586,12 @@ export default function LandingPage() {
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '12px',
-                padding: '20px 48px',
+                padding: isMobile ? '16px 32px' : '20px 48px',
                 background: 'linear-gradient(135deg, #ef4444, #f97316)',
                 color: 'white',
                 borderRadius: '14px',
                 fontWeight: 600,
-                fontSize: '1.2rem',
+                fontSize: isMobile ? '1rem' : '1.2rem',
                 textDecoration: 'none',
                 boxShadow: '0 8px 30px rgba(239, 68, 68, 0.4)',
                 transition: 'all 0.35s cubic-bezier(0.33, 1, 0.68, 1)',
@@ -536,17 +608,18 @@ export default function LandingPage() {
       <footer style={{
         position: 'relative',
         zIndex: 10,
-        padding: '32px 24px',
+        padding: isMobile ? '24px 16px' : '32px 24px',
         borderTop: `1px solid ${colors.cardBorder}`,
       }}>
         <div style={{
           maxWidth: '1280px',
           margin: '0 auto',
           display: 'flex',
-          flexWrap: 'wrap',
+          flexDirection: isMobile ? 'column' : 'row',
           alignItems: 'center',
-          justifyContent: 'space-between',
+          justifyContent: isMobile ? 'center' : 'space-between',
           gap: '16px',
+          textAlign: isMobile ? 'center' : 'left',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{

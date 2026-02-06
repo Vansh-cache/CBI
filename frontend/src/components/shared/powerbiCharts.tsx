@@ -22,19 +22,30 @@ import {
   YAxis,
   ZAxis,
 } from 'recharts';
-import { ChevronRight, ChevronDown, RotateCcw, Plus, X } from 'lucide-react';
+import { ChevronRight, ChevronDown, RotateCcw, Plus, X, Lightbulb } from 'lucide-react';
 
+/** Extended palette so many series stay visually distinct (Power BI–inspired + extra hues) */
 const PBI_COLORS = [
-  '#118DFF', // Power BI-ish blue
-  '#12239E',
-  '#E66C37',
-  '#6B007B',
-  '#00B7C3',
-  '#744EC2',
-  '#D64550',
-  '#7FBA00',
-  '#FFB900',
-  '#4C78A8',
+  '#118DFF', // blue
+  '#12239E', // navy
+  '#E66C37', // orange
+  '#6B007B', // purple
+  '#00B7C3', // cyan
+  '#744EC2', // violet
+  '#D64550', // red
+  '#7FBA00', // green
+  '#FFB900', // amber
+  '#4C78A8', // steel blue
+  '#E91E63', // pink
+  '#009688', // teal
+  '#FF5722', // deep orange
+  '#673AB7', // deep purple
+  '#3F51B5', // indigo
+  '#8BC34A', // light green
+  '#FF9800', // orange
+  '#795548', // brown
+  '#607D8B', // blue grey
+  '#9C27B0', // magenta
 ];
 
 /** Lighten or darken a hex color. Factor > 0 = lighter, factor < 0 = darker */
@@ -54,63 +65,106 @@ type ThemeMode = 'light' | 'dark';
 function getChartTokens(mode: ThemeMode) {
   const isDark = mode === 'dark';
   return {
-    // PowerBI uses subtle gridlines and neutral typography.
-    grid: isDark ? 'rgba(148, 163, 184, 0.18)' : 'rgba(107, 114, 128, 0.20)',
-    axis: isDark ? 'rgba(226, 232, 240, 0.72)' : 'rgba(55, 65, 81, 0.78)',
-    tick: isDark ? 'rgba(226, 232, 240, 0.78)' : 'rgba(55, 65, 81, 0.86)',
-    legend: isDark ? 'rgba(226, 232, 240, 0.82)' : 'rgba(17, 24, 39, 0.80)',
-    tooltipBg: isDark ? 'rgba(17, 24, 39, 0.96)' : 'rgba(255, 255, 255, 0.98)',
-    tooltipBorder: isDark ? 'rgba(55, 65, 81, 1)' : 'rgba(229, 231, 235, 1)',
+    grid: isDark ? 'rgba(148, 163, 184, 0.12)' : 'rgba(107, 114, 128, 0.14)',
+    axis: isDark ? 'rgba(226, 232, 240, 0.78)' : 'rgba(55, 65, 81, 0.82)',
+    tick: isDark ? 'rgba(226, 232, 240, 0.82)' : 'rgba(55, 65, 81, 0.88)',
+    legend: isDark ? 'rgba(226, 232, 240, 0.88)' : 'rgba(17, 24, 39, 0.85)',
+    tooltipBg: isDark ? 'rgba(17, 24, 39, 0.97)' : 'rgba(255, 255, 255, 0.99)',
+    tooltipBorder: isDark ? 'rgba(55, 65, 81, 0.6)' : 'rgba(229, 231, 235, 0.9)',
     tooltipText: isDark ? '#f9fafb' : '#111827',
-    fontSize: 13,
+    tooltipShadow: isDark ? '0 20px 50px rgba(0,0,0,0.4), 0 4px 12px rgba(0,0,0,0.25)' : '0 20px 50px rgba(0,0,0,0.08), 0 8px 24px rgba(0,0,0,0.04)',
+    fontSize: 14,
   };
 }
 
 const tooltipContentStyle = { transition: 'opacity 0.2s ease, transform 0.2s ease' };
+
+/** Resolve a solid color for tooltip dot from payload item (Recharts may pass fill as url() for pie). */
+function getTooltipDotColor(
+  p: any,
+  index: number,
+  options?: { pieData?: any[]; pieNameKey?: string; pieValueKey?: string; pieAccentColor?: string }
+): string {
+  const c = p?.color || p?.stroke;
+  if (c && typeof c === 'string' && !c.startsWith('url')) return c;
+  const fill = p?.fill;
+  if (fill && typeof fill === 'string' && !fill.startsWith('url')) return fill;
+  // Pie/donut: payload has fill as url(); resolve slice index from data so dot matches slice color
+  if (options?.pieData && options.pieNameKey != null && options.pieValueKey != null) {
+    const sliceIndex = (options.pieData as any[]).findIndex(
+      (d) => String(d[options.pieNameKey!]) === String(p?.name) && Number(d[options.pieValueKey!]) === Number(p?.value)
+    );
+    if (sliceIndex >= 0) {
+      return sliceIndex === 0 && options.pieAccentColor ? options.pieAccentColor : PBI_COLORS[sliceIndex % PBI_COLORS.length];
+    }
+  }
+  return PBI_COLORS[index % PBI_COLORS.length];
+}
 
 export function PowerBITooltip({
   active,
   payload,
   label,
   mode,
+  pieData,
+  pieNameKey,
+  pieValueKey,
+  pieAccentColor,
 }: {
   active?: boolean;
   payload?: any[];
   label?: unknown;
   mode: ThemeMode;
+  /** Pass from Pie/Donut so tooltip dot matches slice color (gradient fill is not usable) */
+  pieData?: any[];
+  pieNameKey?: string;
+  pieValueKey?: string;
+  pieAccentColor?: string;
 }) {
   if (!active || !payload || payload.length === 0) return null;
   const t = getChartTokens(mode);
+  const pieOpts = pieData && pieNameKey != null && pieValueKey != null
+    ? { pieData, pieNameKey, pieValueKey, pieAccentColor }
+    : undefined;
   return (
     <div
-      className="rounded-lg border-2 px-4 py-3 shadow-xl"
+      className="rounded-xl px-4 py-3 border"
       style={{
         backgroundColor: t.tooltipBg,
         borderColor: t.tooltipBorder,
         color: t.tooltipText,
-        backdropFilter: 'blur(10px)',
+        backdropFilter: 'blur(12px)',
+        boxShadow: t.tooltipShadow,
         ...tooltipContentStyle,
       }}
     >
       {label !== undefined && label !== null && (
-        <div className="text-sm font-semibold mb-2 pb-1.5 border-b" style={{ borderColor: 'rgba(255,255,255,0.2)' }}>
+        <div className="text-base font-semibold mb-2 pb-1.5 border-b" style={{ borderColor: 'rgba(255,255,255,0.2)' }}>
           {String(label)}
         </div>
       )}
       <div className="space-y-2">
-        {payload.map((p: any, idx: number) => (
-          <div key={idx} className="flex items-center justify-between gap-6 text-[13px]">
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="inline-block h-3 w-3 rounded-full shrink-0" style={{ backgroundColor: p.color || PBI_COLORS[0] }} />
-              <span className="truncate font-medium">
-                {String(p.name ?? '')}
+        {payload.map((p: any, idx: number) => {
+          const dotColor = getTooltipDotColor(p, idx, pieOpts);
+          return (
+            <div key={idx} className="flex items-center justify-between gap-6 text-[14px]">
+              <div className="flex items-center gap-2 min-w-0">
+                <span
+                  className="inline-block h-3 w-3 rounded-full shrink-0 border-2 border-white/30 shadow-sm"
+                  style={{ backgroundColor: dotColor }}
+                  title={String(p.name ?? '')}
+                  aria-hidden
+                />
+                <span className="truncate font-medium">
+                  {String(p.name ?? '')}
+                </span>
+              </div>
+              <span className="font-bold">
+                {typeof p.value === 'number' ? p.value.toLocaleString() : String(p.value ?? '')}
               </span>
             </div>
-            <span className="font-bold">
-              {typeof p.value === 'number' ? p.value.toLocaleString() : String(p.value ?? '')}
-            </span>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -131,8 +185,9 @@ function commonGridProps(mode: ThemeMode) {
   const t = getChartTokens(mode);
   return {
     stroke: t.grid,
-    strokeDasharray: '2 4',
+    strokeDasharray: '4 8',
     vertical: false,
+    strokeWidth: 0.75,
   } as const;
 }
 
@@ -142,16 +197,16 @@ function commonLegendProps(mode: ThemeMode) {
     verticalAlign: 'top' as const,
     align: 'left' as const,
     iconType: 'circle' as const,
-    iconSize: 8,
+    iconSize: 10,
     wrapperStyle: { fontSize: t.fontSize, color: t.legend, paddingBottom: 6 },
   };
 }
 
 const commonTooltipProps = {
   isAnimationActive: true,
-  animationDuration: 200,
+  animationDuration: 220,
   animationEasing: 'ease-out' as const,
-  cursor: { fill: 'rgba(0,0,0,0.04)', stroke: 'rgba(0,0,0,0.06)', strokeWidth: 1 },
+  cursor: { fill: 'rgba(0,0,0,0.03)', stroke: 'rgba(0,0,0,0.08)', strokeWidth: 1, strokeDasharray: '4 4' },
 };
 
 export function PowerBIBar({
@@ -186,8 +241,8 @@ export function PowerBIBar({
       >
         <defs>
           <linearGradient id={`pbi-bar-${id}`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={barColor} stopOpacity={0.95} />
-            <stop offset="100%" stopColor={barColor2} stopOpacity={0.85} />
+            <stop offset="0%" stopColor={lightenColor(barColor, 0.15)} stopOpacity={1} />
+            <stop offset="100%" stopColor={barColor2} stopOpacity={0.92} />
           </linearGradient>
         </defs>
         <CartesianGrid {...commonGridProps(mode)} horizontal={layout === 'horizontal'} vertical={layout === 'vertical'} />
@@ -203,17 +258,16 @@ export function PowerBIBar({
           </>
         )}
         <Tooltip content={(p) => <PowerBITooltip {...(p as any)} mode={mode} />} {...commonTooltipProps} />
-        <Legend {...commonLegendProps(mode)} />
         <Bar
           dataKey={yKey}
           fill={`url(#pbi-bar-${id})`}
-          radius={[8, 8, 0, 0]}
+          radius={[10, 10, 0, 0]}
           isAnimationActive={animations}
-          animationDuration={animations ? 300 : 0}
+          animationDuration={animations ? 350 : 0}
           animationEasing="ease-out"
           onClick={onBarClick}
           cursor="pointer"
-          activeBar={animations ? { stroke: mode === 'dark' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.12)', strokeWidth: 2, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.15))' } : undefined}
+          activeBar={animations ? { stroke: mode === 'dark' ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.6)', strokeWidth: 2, filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.18))' } : undefined}
         />
       </BarChart>
     </ResponsiveContainer>
@@ -272,7 +326,6 @@ export const PowerBIStackedBar = React.memo(({
           </>
         )}
         <Tooltip content={(p) => <PowerBITooltip {...(p as any)} mode={mode} />} {...commonTooltipProps} />
-        <Legend {...commonLegendProps(mode)} />
         {stackKeys.map((key, index) => (
           <Bar
             key={key}
@@ -282,10 +335,10 @@ export const PowerBIStackedBar = React.memo(({
             isAnimationActive={animations}
             animationDuration={animations ? 300 : 0}
             animationEasing="ease-out"
-            radius={index === stackKeys.length - 1 ? (layout === 'horizontal' ? [8, 8, 0, 0] : [0, 8, 8, 0]) : [0, 0, 0, 0]}
+            radius={index === stackKeys.length - 1 ? (layout === 'horizontal' ? [10, 10, 0, 0] : [0, 10, 10, 0]) : [0, 0, 0, 0]}
             onClick={onBarClick}
             cursor="pointer"
-            activeBar={animations ? { stroke: mode === 'dark' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.12)', strokeWidth: 2, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.15))' } : undefined}
+            activeBar={animations ? { stroke: mode === 'dark' ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.5)', strokeWidth: 2, filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.18))' } : undefined}
           />
         ))}
       </BarChart>
@@ -316,18 +369,18 @@ export function PowerBILine({
         <XAxis dataKey={xKey} {...commonAxisProps(mode)} />
         <YAxis {...commonAxisProps(mode)} />
         <Tooltip content={(p) => <PowerBITooltip {...(p as any)} mode={mode} />} {...commonTooltipProps} />
-        <Legend {...commonLegendProps(mode)} />
         <Line
           type="monotone"
           dataKey={yKey}
           stroke={strokeColor}
-          strokeWidth={2.5}
+          strokeWidth={2.75}
           dot={false}
-          activeDot={animations ? { r: 6, fill: strokeColor, stroke: mode === 'dark' ? '#fff' : '#1e293b', strokeWidth: 2, style: { transition: 'all 0.2s ease' } } : { r: 4 }}
+          activeDot={animations ? { r: 7, fill: strokeColor, stroke: mode === 'dark' ? 'rgba(255,255,255,0.9)' : '#fff', strokeWidth: 2.5, style: { transition: 'all 0.2s ease', filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.2))' } } : { r: 5 }}
           isAnimationActive={animations}
           animationDuration={animations ? 400 : 0}
           animationEasing="ease-out"
           strokeLinecap="round"
+          strokeLinejoin="round"
         />
       </LineChart>
     </ResponsiveContainer>
@@ -357,7 +410,8 @@ export function PowerBIArea({
       <AreaChart data={data as any[]} margin={{ top: 12, right: 10, bottom: 4, left: 8 }}>
         <defs>
           <linearGradient id={`pbi-area-${id}`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={fillTop} stopOpacity={0.40} />
+            <stop offset="0%" stopColor={fillTop} stopOpacity={0.45} />
+            <stop offset="60%" stopColor={fillTop} stopOpacity={0.12} />
             <stop offset="100%" stopColor={fillTop} stopOpacity={0.02} />
           </linearGradient>
         </defs>
@@ -365,17 +419,18 @@ export function PowerBIArea({
         <XAxis dataKey={xKey} {...commonAxisProps(mode)} />
         <YAxis {...commonAxisProps(mode)} />
         <Tooltip content={(p) => <PowerBITooltip {...(p as any)} mode={mode} />} {...commonTooltipProps} />
-        <Legend {...commonLegendProps(mode)} />
         <Area
           type="monotone"
           dataKey={yKey}
           stroke={fillTop}
-          strokeWidth={2.25}
+          strokeWidth={2.5}
           fill={`url(#pbi-area-${id})`}
           isAnimationActive={animations}
           animationDuration={animations ? 400 : 0}
           animationEasing="ease-out"
-          activeDot={animations ? { r: 5, fill: fillTop, stroke: mode === 'dark' ? '#fff' : '#1e293b', strokeWidth: 2 } : undefined}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          activeDot={animations ? { r: 6, fill: fillTop, stroke: mode === 'dark' ? 'rgba(255,255,255,0.9)' : '#fff', strokeWidth: 2.5, style: { filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.2))' } } : undefined}
         />
       </AreaChart>
     </ResponsiveContainer>
@@ -420,8 +475,7 @@ export function PowerBIPie({
             );
           })}
         </defs>
-        <Tooltip content={(p) => <PowerBITooltip {...(p as any)} mode={mode} />} {...commonTooltipProps} cursor={false} />
-        <Legend {...commonLegendProps(mode)} />
+        <Tooltip content={(p) => <PowerBITooltip {...(p as any)} mode={mode} pieData={data} pieNameKey={nameKey} pieValueKey={valueKey} pieAccentColor={accentColor} />} {...commonTooltipProps} cursor={false} />
         <Pie
           data={data}
           nameKey={nameKey}
@@ -430,8 +484,8 @@ export function PowerBIPie({
           cy="52%"
           innerRadius={innerRadius}
           outerRadius={outerRadius}
-          paddingAngle={0}
-          cornerRadius={8}
+          paddingAngle={1}
+          cornerRadius={10}
           isAnimationActive={animations}
           animationDuration={animations ? 300 : 0}
           animationEasing="ease-out"
@@ -450,7 +504,7 @@ export function PowerBIPie({
                 cy={cy}
                 innerRadius={scaledInner}
                 outerRadius={scaledOuter}
-                style={{ filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.25))', transition: 'all 0.2s ease' }}
+                style={{ filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.22))', transition: 'all 0.25s ease' }}
               />
             );
           } : undefined}
@@ -530,7 +584,6 @@ export function PowerBIScatter({
         <XAxis dataKey={xKey} {...commonAxisProps(mode)} />
         <YAxis dataKey={yKey} {...commonAxisProps(mode)} />
         <Tooltip content={(p) => <PowerBITooltip {...(p as any)} mode={mode} />} {...commonTooltipProps} />
-        <Legend {...commonLegendProps(mode)} />
         <Scatter
           data={data as any[]}
           fill={`url(#pbi-scatter-${id})`}
@@ -577,7 +630,6 @@ export function PowerBIBubble({
         <YAxis dataKey={yKey} {...commonAxisProps(mode)} />
         <ZAxis dataKey={zKey} range={[60, 400]} />
         <Tooltip content={(p) => <PowerBITooltip {...(p as any)} mode={mode} />} {...commonTooltipProps} />
-        <Legend {...commonLegendProps(mode)} />
         <Scatter
           data={data as any[]}
           fill={`url(#pbi-bubble-${id})`}
@@ -637,7 +689,6 @@ export function PowerBIWaterfall({
         <XAxis dataKey={xKey} {...commonAxisProps(mode)} />
         <YAxis {...commonAxisProps(mode)} />
         <Tooltip content={(p) => <PowerBITooltip {...(p as any)} mode={mode} />} {...commonTooltipProps} />
-        <Legend {...commonLegendProps(mode)} />
         <Bar
           dataKey="value"
           radius={[8, 8, 4, 4]}
@@ -700,8 +751,8 @@ export function PowerBIFunnel({
                 }}
                 title={tooltipText}
               >
-                <span className="text-sm font-medium truncate">{name}</span>
-                <span className="text-sm font-bold ml-2">{value.toLocaleString()}</span>
+                <span className="text-base font-medium truncate">{name}</span>
+                <span className="text-base font-bold ml-2">{value.toLocaleString()}</span>
               </div>
             </div>
           );
@@ -724,6 +775,8 @@ function aggValues(values: number[], agg?: string): number {
   }
 }
 
+const MAX_VISIBLE_NODES = 6;
+
 export function PowerBIDecompositionTree({
   data,
   measureFields,
@@ -744,14 +797,18 @@ export function PowerBIDecompositionTree({
   onNodeClick?: (field: string, value: unknown) => void;
 }) {
   const [drillPath, setDrillPath] = useState<{ dim: string; value: unknown }[]>([]);
+  const [expandedLevels, setExpandedLevels] = useState<Set<number>>(new Set());
 
   const isDark = mode === 'dark';
   const t = getChartTokens(mode);
-  const primaryColor = accentColor || PBI_COLORS[5];
+  const primaryColor = accentColor || PBI_COLORS[0];
   const measureLabel = measureFields[0] || 'Value';
+  const connectorColor = isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)';
+  const barTrack = isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)';
+  const mutedColor = isDark ? '#94a3b8' : '#64748b';
 
   const formatVal = (v: number) => {
-    if (format === 'currency') return v.toLocaleString(undefined, { style: 'currency', currency: 'USD', minimumFractionDigits: 2 });
+    if (format === 'currency') return v.toLocaleString('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0, maximumFractionDigits: 0 });
     if (format === 'percent') return `${(v * 100).toFixed(2)}%`;
     return v.toLocaleString(undefined, { maximumFractionDigits: 2 });
   };
@@ -795,7 +852,7 @@ export function PowerBIDecompositionTree({
   }, [rootData, measureFields, aggregation]);
 
   const treeLevels = useMemo(() => {
-    const levels: { dim: string; nodes: { name: string; value: number; values: number[]; isSelected: boolean }[] }[] = [];
+    const levels: { dim: string; nodes: { name: string; value: number; values: number[]; isSelected: boolean; pct: number }[] }[] = [];
     for (let i = 0; i < dimensionFields.length; i++) {
       const dim = dimensionFields[i];
       const filtered = getFilteredData(i);
@@ -827,125 +884,183 @@ export function PowerBIDecompositionTree({
     setDrillPath((p) => p.slice(0, levelIdx));
   };
 
-  const barTrack = isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)';
+  const toggleExpanded = (levelIdx: number) => {
+    setExpandedLevels((prev) => {
+      const next = new Set(prev);
+      if (next.has(levelIdx)) next.delete(levelIdx);
+      else next.add(levelIdx);
+      return next;
+    });
+  };
 
   return (
     <div className="h-full flex flex-col overflow-hidden" style={{ color: t.legend, backgroundColor: isDark ? '#1e293b' : '#ffffff' }}>
-      {/* Filter headers */}
-      <div className="flex flex-wrap items-center gap-2 p-2 shrink-0" style={{ borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)'}` }}>
-        {drillPath.map((step, i) => (
-          <div
-            key={i}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium"
-            style={{
-              backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
-              border: `1px solid ${isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.1)'}`,
-            }}
-          >
-            <span style={{ color: isDark ? '#94a3b8' : '#64748b' }}>{step.dim}:</span>
-            <span className="font-semibold truncate max-w-[100px]">{String(step.value ?? '(Blank)')}</span>
-            <button
-              type="button"
-              onClick={() => handleClearFilter(i)}
-              className="p-0.5 rounded hover:bg-black/10 flex-shrink-0"
-              title={`Clear ${step.dim}`}
-            >
-              <X style={{ width: 12, height: 12 }} />
-            </button>
-          </div>
-        ))}
-      </div>
-
-      {/* Horizontal tree */}
       <div className="flex-1 min-h-0 overflow-auto p-4">
-        <div className="flex gap-6 items-stretch" style={{ minWidth: 'max-content' }}>
-          {/* Level 0: Root */}
-          <div className="flex flex-col justify-center shrink-0">
+        <div className="flex items-stretch gap-0" style={{ minWidth: 'max-content' }}>
+          {/* Column 0: Root — Total Sales style */}
+          <div className="flex flex-col justify-center shrink-0 pr-2">
             <div
-              className="px-4 py-2.5 rounded-lg min-w-[140px]"
+              className="flex flex-col rounded-lg overflow-hidden min-w-[180px]"
               style={{
-                backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.03)',
-                border: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)'}`,
+                backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : '#f8fafc',
+                border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)'}`,
               }}
             >
-              <div className="text-xs font-medium mb-1.5" style={{ color: isDark ? '#94a3b8' : '#64748b' }}>
-                {measureLabel}
+              <div className="px-4 pt-3 pb-2">
+                <div className="text-base font-medium mb-1" style={{ color: mutedColor }}>
+                  {measureLabel}
+                </div>
+                <div className="text-2xl font-bold mb-3" style={{ color: isDark ? '#e2e8f0' : '#0f172a' }}>
+                  {formatVal(rootValue)}
+                </div>
               </div>
-              <div className="text-lg font-bold mb-2" style={{ color: primaryColor }}>
-                {formatVal(rootValue)}
-              </div>
-              <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: barTrack, width: 120 }}>
+              <div className="h-3 w-full overflow-hidden" style={{ backgroundColor: barTrack }}>
                 <div
-                  className="h-full rounded-full transition-all duration-300"
+                  className="h-full transition-all duration-300"
                   style={{ width: '100%', backgroundColor: primaryColor }}
                 />
               </div>
             </div>
           </div>
 
-          {/* Level columns */}
+          {/* Connector + dimension columns */}
           {treeLevels.map((level, levelIdx) => {
-            const showLevel = levelIdx === 0 || drillPath.length >= levelIdx;
-            if (!showLevel) return null;
+            const expanded = expandedLevels.has(levelIdx);
+            const visibleNodes = expanded ? level.nodes : level.nodes.slice(0, MAX_VISIBLE_NODES);
+            const hasMore = level.nodes.length > MAX_VISIBLE_NODES;
             const canDrill = drillPath.length >= levelIdx;
 
             return (
-              <div key={levelIdx} className="flex items-center shrink-0">
-                <ChevronRight
-                  style={{ width: 20, height: 20, opacity: 0.4, flexShrink: 0 }}
-                />
-                <div className="flex flex-col gap-2 min-w-[160px]">
-                  <div className="text-[10px] font-semibold uppercase tracking-wide mb-1" style={{ color: isDark ? '#94a3b8' : '#64748b' }}>
-                    {level.dim}
-                  </div>
-                  {level.nodes.map((node) => {
-                    const isSelected = node.isSelected;
-                    const canClick = canDrill || (levelIdx < drillPath.length && isSelected && levelIdx === drillPath.length - 1);
-                    const hasMore = levelIdx < dimensionFields.length - 1 && isSelected;
-
-                    return (
-                      <button
-                        key={String(node.name)}
-                        type="button"
-                        onClick={() => canClick && handleDrillDown(levelIdx, node.name === '(Blank)' ? null : node.name)}
-                        disabled={!canClick}
-                        className="text-left px-3 py-2 rounded-lg transition-all hover:opacity-90 disabled:opacity-60 disabled:cursor-default"
-                        style={{
-                          backgroundColor: isSelected
-                            ? (isDark ? 'rgba(59,130,246,0.2)' : 'rgba(59,130,246,0.1)')
-                            : (isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)'),
-                          border: `1px solid ${isSelected ? primaryColor : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)')}`,
-                        }}
-                        title={canClick ? `Click to drill into ${node.name}` : undefined}
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <span
-                            className="text-sm truncate font-medium"
-                            style={{ fontWeight: isSelected ? 600 : 400 }}
-                          >
-                            {String(node.name)}
-                          </span>
-                          {hasMore && dimensionFields.length > levelIdx + 1 && (
-                            <Plus style={{ width: 12, height: 12, opacity: 0.6, flexShrink: 0 }} />
-                          )}
-                        </div>
-                        <div className="text-sm font-bold mt-1" style={{ color: isSelected ? primaryColor : undefined }}>
-                          {formatVal(node.value)}
-                        </div>
-                        <div className="h-1.5 rounded-full overflow-hidden mt-1.5" style={{ backgroundColor: barTrack }}>
-                          <div
-                            className="h-full rounded-full transition-all duration-300"
-                            style={{
-                              width: `${node.pct}%`,
-                              backgroundColor: isSelected ? primaryColor : (isDark ? '#64748b' : '#94a3b8'),
-                            }}
-                          />
-                        </div>
-                      </button>
-                    );
-                  })}
+              <React.Fragment key={levelIdx}>
+                {/* Curved connector */}
+                <div className="flex items-center shrink-0 w-8 justify-center self-stretch py-4">
+                  <svg width={32} height="100%" className="overflow-visible" style={{ minHeight: 80 }}>
+                    <path
+                      d="M 0 50 Q 16 50 32 50"
+                      fill="none"
+                      stroke={connectorColor}
+                      strokeWidth={1.5}
+                      strokeLinecap="round"
+                    />
+                  </svg>
                 </div>
-              </div>
+
+                <div className="flex flex-col min-w-[200px] max-w-[240px] shrink-0">
+                  {/* Per-column filter header */}
+                  <div
+                    className="flex items-center justify-between gap-2 px-3 py-2 rounded-t-lg shrink-0"
+                    style={{
+                      backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.03)',
+                      border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)'}`,
+                      borderBottom: 'none',
+                    }}
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-sm font-semibold truncate" style={{ color: mutedColor }}>
+                        {level.dim}
+                      </span>
+                      {drillPath[levelIdx] != null && (
+                        <span className="text-sm font-medium truncate" style={{ color: isDark ? '#e2e8f0' : '#0f172a' }}>
+                          {String(drillPath[levelIdx].value ?? '(Blank)')}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-0.5 flex-shrink-0">
+                      {levelIdx === dimensionFields.length - 1 && (
+                        <button
+                          type="button"
+                          className="p-1 rounded hover:opacity-80"
+                          style={{ color: mutedColor }}
+                          title="Insights"
+                        >
+                          <Lightbulb style={{ width: 14, height: 14 }} />
+                        </button>
+                      )}
+                      {drillPath[levelIdx] != null && (
+                        <button
+                          type="button"
+                          onClick={() => handleClearFilter(levelIdx)}
+                          className="p-1 rounded hover:bg-black/10"
+                          style={{ color: mutedColor }}
+                          title={`Clear ${level.dim}`}
+                        >
+                          <X style={{ width: 14, height: 14 }} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Breakdown list */}
+                  <div
+                    className="flex flex-col flex-1 rounded-b-lg border border-t-0"
+                    style={{
+                      borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)',
+                      backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : '#ffffff',
+                    }}
+                  >
+                    {visibleNodes.map((node) => {
+                      const isSelected = node.isSelected;
+                      return (
+                        <button
+                          key={String(node.name)}
+                          type="button"
+                          onClick={() => handleDrillDown(levelIdx, node.name === '(Blank)' ? null : node.name)}
+                          className="text-left w-full px-3 py-2.5 transition-all hover:opacity-95 border-b last:border-b-0"
+                          style={{
+                            borderColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
+                            backgroundColor: isSelected ? (isDark ? 'rgba(17,141,255,0.18)' : 'rgba(17,141,255,0.1)') : 'transparent',
+                          }}
+                          title={`Drill into ${node.name}`}
+                        >
+                          <div className="flex items-center justify-between gap-2 mb-1">
+                            <span
+                              className="text-base truncate font-medium"
+                              style={{ color: isDark ? '#e2e8f0' : '#0f172a', fontWeight: isSelected ? 600 : 400 }}
+                            >
+                              {node.name}
+                            </span>
+                            <span
+                              className="text-base font-semibold shrink-0"
+                              style={{ color: isSelected ? primaryColor : mutedColor }}
+                            >
+                              {formatVal(node.value)}
+                            </span>
+                          </div>
+                          <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: barTrack }}>
+                            <div
+                              className="h-full rounded-full transition-all duration-300"
+                              style={{
+                                width: `${node.pct}%`,
+                                backgroundColor: isSelected ? primaryColor : (isDark ? '#64748b' : '#94a3b8'),
+                              }}
+                            />
+                          </div>
+                        </button>
+                      );
+                    })}
+
+                    {/* Show more / expand */}
+                    {hasMore && (
+                      <button
+                        type="button"
+                        onClick={() => toggleExpanded(levelIdx)}
+                        className="flex items-center justify-center gap-1 py-2 text-sm font-medium border-t"
+                        style={{ color: mutedColor, borderColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }}
+                      >
+                        <ChevronDown
+                          style={{
+                            width: 14,
+                            height: 14,
+                            transform: expanded ? 'rotate(180deg)' : undefined,
+                            transition: 'transform 0.2s',
+                          }}
+                        />
+                        {expanded ? 'Show less' : 'Show more'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </React.Fragment>
             );
           })}
         </div>
@@ -988,7 +1103,6 @@ export function PowerBICombo({
         <XAxis dataKey={xKey} {...commonAxisProps(mode)} />
         <YAxis {...commonAxisProps(mode)} />
         <Tooltip content={(p) => <PowerBITooltip {...(p as any)} mode={mode} />} {...commonTooltipProps} />
-        <Legend {...commonLegendProps(mode)} />
         <Bar
           dataKey={yKey}
           fill={`url(#pbi-combo-bar-${id})`}
@@ -998,7 +1112,6 @@ export function PowerBICombo({
           animationEasing="ease-out"
           cursor="pointer"
           activeBar={animations ? { stroke: mode === 'dark' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.12)', strokeWidth: 2, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.15))' } : undefined}
-          animationEasing="ease-out"
         />
         <Line
           type="monotone"

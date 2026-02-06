@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router';
 import {
   BarChart3,
@@ -12,6 +12,19 @@ import {
 import { apiGet } from '../../lib/api';
 import { useTheme } from '../../contexts/ThemeContext';
 import { getThemeColors, getColorPalette } from '../../lib/themeColors';
+
+// Responsive hook
+function useIsMobile(breakpoint = 768) {
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== 'undefined' ? window.innerWidth < breakpoint : false
+  );
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < breakpoint);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [breakpoint]);
+  return isMobile;
+}
 
 interface Dashboard {
   id: number;
@@ -38,6 +51,7 @@ export default function ViewerHome() {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
   const palette = getColorPalette(isDark);
+  const isMobile = useIsMobile();
 
   const fetchDashboards = useCallback(async () => {
     setLoading(true);
@@ -79,6 +93,16 @@ export default function ViewerHome() {
     if (!d.config) return 0;
     try {
       const c = typeof d.config === 'string' ? JSON.parse(d.config) : d.config;
+      // Check for multi-page structure first, then fall back to legacy single-page
+      const pages = (c as { pages?: { widgets?: unknown[] }[] }).pages;
+      if (Array.isArray(pages) && pages.length > 0) {
+        // Count widgets across all pages
+        return pages.reduce((total, page) => {
+          const widgets = page.widgets;
+          return total + (Array.isArray(widgets) ? widgets.length : 0);
+        }, 0);
+      }
+      // Legacy: single-page structure
       const w = (c as { widgets?: unknown[] }).widgets;
       return Array.isArray(w) ? w.length : 0;
     } catch {
@@ -97,12 +121,18 @@ export default function ViewerHome() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-      <div className="animate-fade-in-down" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1.5rem' }}>
+      <div className="animate-fade-in-down" style={{
+        display: 'flex',
+        flexDirection: isMobile ? 'column' : 'row',
+        alignItems: isMobile ? 'stretch' : 'center',
+        justifyContent: 'space-between',
+        gap: isMobile ? '1rem' : '1.5rem'
+      }}>
         <div style={{ flexShrink: 0 }}>
-          <h1 style={{ fontSize: '1.875rem', fontWeight: 700, color: colors.text, marginBottom: '0.5rem' }}>My Dashboards</h1>
-          <p style={{ color: colors.muted }}>Access your assigned analytics dashboards</p>
+          <h1 style={{ fontSize: isMobile ? '1.5rem' : '1.875rem', fontWeight: 700, color: colors.text, marginBottom: '0.5rem' }}>My Dashboards</h1>
+          <p style={{ color: colors.muted, fontSize: isMobile ? '0.875rem' : '1rem' }}>Access your assigned analytics dashboards</p>
         </div>
-        <div style={{ flex: 1, maxWidth: '28rem' }}>
+        <div style={{ flex: 1, maxWidth: isMobile ? '100%' : '28rem' }}>
           <div style={{ position: 'relative' }}>
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5" style={{ color: colors.muted }} />
             <input
@@ -121,7 +151,8 @@ export default function ViewerHome() {
                 border: `1px solid ${colors.inputBorder}`,
                 borderRadius: '0.5rem',
                 outline: 'none',
-                boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+                boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                fontSize: isMobile ? '1rem' : '0.875rem'
               }}
             />
           </div>
@@ -338,27 +369,27 @@ export default function ViewerHome() {
 
       {/* Quick Tips */}
       <div>
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: colors.text, marginBottom: '1rem' }}>Quick Tips</h2>
+        <h2 style={{ fontSize: isMobile ? '1.125rem' : '1.25rem', fontWeight: 600, color: colors.text, marginBottom: '1rem' }}>Quick Tips</h2>
         <div style={{
           background: 'linear-gradient(to right, #ef4444, #f97316)',
           borderRadius: '0.75rem',
-          padding: '1.5rem',
+          padding: isMobile ? '1rem' : '1.5rem',
           boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
           color: 'white'
         }}>
-          <div style={{ display: 'flex', alignItems: 'flex-start' }}>
-            <div style={{ backgroundColor: 'rgba(255,255,255,0.2)', padding: '0.75rem', borderRadius: '0.5rem', marginRight: '1rem' }}>
+          <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: 'flex-start', gap: isMobile ? '1rem' : '0' }}>
+            <div style={{ backgroundColor: 'rgba(255,255,255,0.2)', padding: '0.75rem', borderRadius: '0.5rem', marginRight: isMobile ? '0' : '1rem' }}>
               <Star className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h3 style={{ fontWeight: 600, marginBottom: '0.5rem', fontSize: '1.125rem' }}>
+              <h3 style={{ fontWeight: 600, marginBottom: '0.5rem', fontSize: isMobile ? '1rem' : '1.125rem' }}>
                 Star Your Favorite Dashboards
               </h3>
-              <p style={{ color: 'rgba(255,255,255,0.9)', marginBottom: '0.75rem' }}>
+              <p style={{ color: 'rgba(255,255,255,0.9)', marginBottom: '0.75rem', fontSize: isMobile ? '0.875rem' : '1rem' }}>
                 Click the star icon on any dashboard card to mark it as a favorite.
                 Your starred dashboards appear at the top for quick access.
               </p>
-              <ul style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', color: 'rgba(255,255,255,0.9)' }}>
+              <ul style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', color: 'rgba(255,255,255,0.9)', fontSize: isMobile ? '0.875rem' : '1rem' }}>
                 <li style={{ display: 'flex', alignItems: 'center' }}>
                   <span style={{ marginRight: '0.5rem' }}>•</span>
                   <span>Use the search bar to find specific dashboards</span>

@@ -69,7 +69,16 @@ export default function DeveloperHome() {
     if (!d.config) return 0;
     try {
       const c = typeof d.config === 'string' ? JSON.parse(d.config) : d.config;
-      const w = (c as { widgets?: unknown[] }).widgets;
+      const config = c as { widgets?: unknown[]; pages?: { widgets?: unknown[] }[] };
+      // New format: pages with widgets per page
+      if (config.pages && Array.isArray(config.pages)) {
+        return config.pages.reduce(
+          (sum, p) => sum + (Array.isArray(p.widgets) ? p.widgets.length : 0),
+          0
+        );
+      }
+      // Legacy format: flat widgets array
+      const w = config.widgets;
       return Array.isArray(w) ? w.length : 0;
     } catch {
       return 0;

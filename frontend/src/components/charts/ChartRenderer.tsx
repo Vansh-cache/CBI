@@ -5,7 +5,7 @@
  */
 
 import React from 'react';
-import { buildAggregatedSeries, getPieDonutData } from '../../lib/widgetDataUtils';
+import { aggregate, buildAggregatedSeries, getPieDonutData, inferIsNumericField } from '../../lib/widgetDataUtils';
 import { getChartMeta } from '../../lib/chartRegistry';
 import {
   PowerBIArea,
@@ -41,9 +41,14 @@ export interface ChartWidgetConfig {
   datasetId?: number;
   accentColor?: string;
   valueFormat?: string;
+  slicerStyle?: 'dropdown' | 'tile' | 'list';
   dimensions?: string[];
   /** Power BI-style: measure refs for values */
   measures?: string[];
+  /** Multiple columns per bucket */
+  xAxisFields?: string[];
+  yAxisFields?: string[];
+  legendFields?: string[];
   /** Per-field aggregations */
   xAxisAggregation?: AggregationType;
   yAxisAggregation?: AggregationType;
@@ -59,16 +64,51 @@ export type ChartRendererOptions = {
   onDataPointClick?: (field: string, value: unknown) => void;
   /** Enable chart animations (e.g. in user portal). Set false in builder for snappy editing. */
   animations?: boolean;
+  /** Mobile responsive mode - scales fonts down */
+  isMobile?: boolean;
 };
 
+/**
+ * Format number using Indian notation (K, L, Cr) for compact display
+ * K = Thousands (1,000)
+ * L = Lakhs (1,00,000 = 100,000)
+ * Cr = Crores (1,00,00,000 = 10,000,000)
+ */
+function formatIndianCompact(value: number): string {
+  const absValue = Math.abs(value);
+  const sign = value < 0 ? '-' : '';
+  
+  if (absValue >= 10000000) {
+    // Crores (1 Cr = 10,000,000)
+    const cr = absValue / 10000000;
+    return sign + (cr >= 100 ? cr.toFixed(0) : cr.toFixed(2).replace(/\.?0+$/, '')) + ' Cr';
+  } else if (absValue >= 100000) {
+    // Lakhs (1 L = 100,000)
+    const lakh = absValue / 100000;
+    return sign + (lakh >= 100 ? lakh.toFixed(0) : lakh.toFixed(2).replace(/\.?0+$/, '')) + ' L';
+  } else if (absValue >= 1000) {
+    // Thousands
+    const k = absValue / 1000;
+    return sign + (k >= 100 ? k.toFixed(0) : k.toFixed(2).replace(/\.?0+$/, '')) + ' K';
+  }
+  return sign + absValue.toLocaleString('en-IN', { maximumFractionDigits: 2 });
+}
+
+/**
+ * Format number with Indian currency prefix (₹) and compact notation
+ */
+function formatIndianCurrencyCompact(value: number): string {
+  return '₹' + formatIndianCompact(value);
+}
+
 function formatValue(value: number, format?: string): string {
-  if (format === 'currency') return value.toLocaleString(undefined, { style: 'currency', currency: 'USD', minimumFractionDigits: 2 });
+  if (format === 'currency') return value.toLocaleString('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 2 });
   if (format === 'percent') return `${(value * 100).toFixed(1)}%`;
   if (format === 'decimal') return value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   return value.toLocaleString(undefined, { maximumFractionDigits: 2 });
 }
 
-function getCardValue(config: ChartWidgetConfig, data: unknown[]): string {
+function getCardValue(config: ChartWidgetConfig, data: unknown[], useCompact: boolean = true): string {
   const aggregation = config.fieldAggregation || config.yAxisAggregation || config.aggregation || 'count';
   // Check for field from various sources (field, yAxis for Values well)
   const field = config.field || config.yAxis;
@@ -77,6 +117,14 @@ function getCardValue(config: ChartWidgetConfig, data: unknown[]): string {
   let value: number;
   // Helper to check if a value is valid (not null, undefined, or empty string)
   const hasValue = (val: unknown): boolean => val !== null && val !== undefined && val !== '';
+  
+  // Helper to format the final value with compact notation if needed
+  const formatFinal = (val: number): string => {
+    if (format === 'percent') return formatValue(val, format);
+    if (format === 'currency') return useCompact ? formatIndianCurrencyCompact(val) : formatValue(val, format);
+    if (useCompact && Math.abs(val) >= 1000) return formatIndianCompact(val);
+    return formatValue(val, format);
+  };
 
   switch (aggregation) {
     case 'count': {
@@ -87,7 +135,7 @@ function getCardValue(config: ChartWidgetConfig, data: unknown[]): string {
         // No field selected - count all rows
         value = (data as any[]).length;
       }
-      return format === 'percent' ? formatValue(value / Math.max(1, value), format) : value.toLocaleString();
+      return format === 'percent' ? formatValue(value / Math.max(1, value), format) : (useCompact && value >= 1000 ? formatIndianCompact(value) : value.toLocaleString());
     }
     case 'countDistinct': {
       // Count DISTINCT values in the selected field (exclude null/undefined/empty)
@@ -99,35 +147,43 @@ function getCardValue(config: ChartWidgetConfig, data: unknown[]): string {
         // No field selected - count all rows
         value = (data as any[]).length;
       }
-      return value.toLocaleString();
+      return useCompact && value >= 1000 ? formatIndianCompact(value) : value.toLocaleString();
     }
     case 'sum': {
       if (!field) return data.length.toLocaleString();
       value = (data as any[]).reduce((acc, item) => acc + (Number(item[field]) || 0), 0);
-      return formatValue(value, format);
+      return formatFinal(value);
     }
     case 'avg': {
       if (!field) return '0';
       const sum = (data as any[]).reduce((acc, item) => acc + (Number(item[field]) || 0), 0);
       value = sum / data.length;
-      return formatValue(value, format);
+      return formatFinal(value);
     }
     case 'min': {
       if (!field) return '0';
       const vals = (data as any[]).map((r) => Number(r[field])).filter((n) => !isNaN(n));
       value = vals.length ? Math.min(...vals) : 0;
-      return formatValue(value, format);
+      return formatFinal(value);
     }
     case 'max': {
       if (!field) return '0';
       const vals = (data as any[]).map((r) => Number(r[field])).filter((n) => !isNaN(n));
       value = vals.length ? Math.max(...vals) : 0;
-      return formatValue(value, format);
+      return formatFinal(value);
     }
-    case 'first':
-      return String((data[0] as any)?.[field ?? ''] ?? '0');
-    case 'last':
-      return String((data[data.length - 1] as any)?.[field ?? ''] ?? '0');
+    case 'first': {
+      const val = (data[0] as any)?.[field ?? ''];
+      const num = Number(val);
+      if (!isNaN(num) && val !== '' && val !== null) return formatFinal(num);
+      return String(val ?? '0');
+    }
+    case 'last': {
+      const val = (data[data.length - 1] as any)?.[field ?? ''];
+      const num = Number(val);
+      if (!isNaN(num) && val !== '' && val !== null) return formatFinal(num);
+      return String(val ?? '0');
+    }
     case 'percentage': {
       if (!field) return '0';
       const total = (data as any[]).reduce((acc, item) => acc + (Number(item[field]) || 0), 0);
@@ -136,12 +192,15 @@ function getCardValue(config: ChartWidgetConfig, data: unknown[]): string {
     case 'none': {
       // No aggregation - just show first value
       if (field) {
-        return String((data[0] as any)?.[field] ?? '0');
+        const val = (data[0] as any)?.[field];
+        const num = Number(val);
+        if (!isNaN(num) && val !== '' && val !== null) return formatFinal(num);
+        return String(val ?? '0');
       }
-      return data.length.toLocaleString();
+      return useCompact && data.length >= 1000 ? formatIndianCompact(data.length) : data.length.toLocaleString();
     }
     default:
-      return data.length.toLocaleString();
+      return useCompact && data.length >= 1000 ? formatIndianCompact(data.length) : data.length.toLocaleString();
   }
 }
 
@@ -213,6 +272,7 @@ export function ChartRenderer(
   const onSlicerChange = options?.onSlicerChange;
   const onDataPointClick = options?.onDataPointClick;
   const animations = options?.animations ?? false;
+  const isMobile = options?.isMobile ?? false;
   const xAxisField = config.xAxis;
   const handleBarClick = onDataPointClick && xAxisField ? (data: any) => onDataPointClick(xAxisField, data?.[xAxisField]) : undefined;
   const pieCategoryField = config.xAxis || config.legend;
@@ -251,8 +311,8 @@ export function ChartRenderer(
     case '100-stacked-bar':
     case '100-stacked-column': {
       // Require X-axis and Values to avoid rendering raw data with all columns (causes page freeze)
-      const hasAxis = !!(config.xAxis || config.dimensions?.[0]);
-      const hasValues = !!(config.yAxis || config.field || config.measures?.[0] || config.dimensions?.[1]);
+      const hasAxis = !!(config.xAxis || config.xAxisFields?.[0] || config.dimensions?.[0]);
+      const hasValues = !!(config.yAxis || config.field || config.yAxisFields?.length || config.measures?.[0] || config.dimensions?.[1]);
       if (!hasAxis || !hasValues) return emptyMessage;
 
       const series = buildAggregatedSeries(rawData, widgetLike);
@@ -266,7 +326,7 @@ export function ChartRenderer(
 
       if (isStacked) {
         const firstRow = series[0] as any;
-        const xKeyVal = config.xAxis || '';
+        const xKeyVal = config.xAxisFields?.[0] ?? config.xAxis ?? '';
         const keys = Object.keys(firstRow || {}).filter((k) => k !== xKeyVal && k !== 'undefined');
 
         if (keys.length > 0) {
@@ -375,36 +435,62 @@ export function ChartRenderer(
       return <PowerBITreemap id={config.id} data={treemapData} mode={mode} accentColor={config.accentColor} animations={animations} />;
     }
     case 'gauge': {
+      const agg = (config.fieldAggregation || config.aggregation || 'sum') as AggregationType;
       let gaugeValue = 0;
       if (rawData.length > 0 && config.field) {
-        const v = Number((rawData[0] as any)[config.field]) || 0;
-        gaugeValue = config.aggregation === 'percentage' ? v : Math.min(100, (v / 100) * 100);
+        const numeric = inferIsNumericField(rawData, config.field);
+        const vals = (rawData as any[]).map((r) => (numeric ? Number(r[config.field!]) || 0 : 1));
+        gaugeValue = aggregate(vals, agg as 'count' | 'countDistinct' | 'sum' | 'first' | 'last' | 'percentage' | 'avg' | 'min' | 'max' | 'none');
       }
+      const arcPercent = Math.min(100, Math.max(0, gaugeValue));
       const trackStroke = isDark ? '#1f2937' : '#e5e7eb';
       const gaugeText = isDark ? '#e2e8f0' : '#111827';
       const gaugeMuted = isDark ? '#94a3b8' : '#6b7280';
+      // Use compact notation for large numeric values
+      let displayStr: string;
+      if (config.valueFormat === 'percent') {
+        displayStr = `${Math.round(gaugeValue)}%`;
+      } else if (config.valueFormat === 'currency') {
+        displayStr = formatIndianCurrencyCompact(gaugeValue);
+      } else if (Math.abs(gaugeValue) >= 1000) {
+        displayStr = formatIndianCompact(gaugeValue);
+      } else {
+        displayStr = formatValue(gaugeValue, config.valueFormat);
+      }
+      const gaugeAccent = config.accentColor || '#3b82f6';
+      // Responsive gauge sizing
+      const gaugeSize = isMobile ? 'w-20 h-20' : 'w-32 h-32';
+      const gaugeFontSize = isMobile ? 'text-lg' : 'text-3xl';
+      const labelFontSize = isMobile ? 'text-sm' : 'text-base';
       return (
-        <div className="flex flex-col items-center justify-center h-full">
-          <div className="relative w-32 h-32">
+        <div
+          className="flex flex-col items-center justify-center h-full rounded-xl px-4 py-4"
+          style={{
+            background: isDark ? 'rgba(255,255,255,0.03)' : 'linear-gradient(180deg, #fafbfc 0%, #f1f5f9 100%)',
+            border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
+            boxShadow: isDark ? '0 2px 12px rgba(0,0,0,0.1)' : '0 2px 12px rgba(0,0,0,0.04)',
+          }}
+        >
+          <div className={`relative ${gaugeSize}`}>
             <svg viewBox="0 0 100 100" className="transform -rotate-90">
-              <circle cx="50" cy="50" r="45" fill="none" stroke={trackStroke} strokeWidth="10" />
+              <circle cx="50" cy="50" r="42" fill="none" stroke={trackStroke} strokeWidth="8" opacity={0.8} />
               <circle
                 cx="50"
                 cy="50"
-                r="45"
+                r="42"
                 fill="none"
-                stroke={config.accentColor || '#3b82f6'}
-                strokeWidth="10"
-                strokeDasharray={`${gaugeValue * 2.827}, 283`}
+                stroke={gaugeAccent}
+                strokeWidth="8"
+                strokeDasharray={`${arcPercent * 2.64}, 264`}
                 strokeLinecap="round"
-                style={{ transition: 'stroke-dasharray 700ms ease-out' }}
+                style={{ transition: 'stroke-dasharray 700ms ease-out', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.15))' }}
               />
             </svg>
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-3xl font-bold" style={{ color: gaugeText }}>{Math.round(gaugeValue)}%</span>
+              <span className={`${gaugeFontSize} font-bold`} style={{ color: gaugeText }}>{displayStr}</span>
             </div>
           </div>
-          <p className="mt-4 text-base" style={{ color: gaugeMuted }}>{config.field || 'Value'}</p>
+          <p className={`mt-2 ${labelFontSize} font-medium`} style={{ color: gaugeMuted }}>{config.field || 'Value'}</p>
         </div>
       );
     }
@@ -413,18 +499,20 @@ export function ChartRenderer(
       const cardValue = getCardValue(config, rawData);
       const cardText = isDark ? '#f1f5f9' : '#111827';
       const accent = config.accentColor || '#118DFF';
+      // Responsive font sizing: smaller on mobile to fit container
+      const valueFontClass = isMobile ? 'text-xl' : 'text-5xl md:text-6xl';
       return (
         <div
-          className="flex flex-col items-center justify-center h-full rounded-lg overflow-hidden"
+          className="flex flex-col items-center justify-center h-full rounded-xl overflow-hidden"
           style={{
-            background: isDark ? 'rgba(255,255,255,0.03)' : 'linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)',
-            border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
-            boxShadow: isDark ? 'none' : '0 1px 2px rgba(0,0,0,0.04)',
+            background: isDark ? 'rgba(255,255,255,0.04)' : 'linear-gradient(180deg, #ffffff 0%, #f8fafc 50%, #f1f5f9 100%)',
+            border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}`,
+            boxShadow: isDark ? '0 4px 20px rgba(0,0,0,0.15)' : '0 4px 20px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04)',
           }}
         >
-          <div className="w-full h-1 shrink-0" style={{ backgroundColor: accent }} />
-          <div className="flex-1 w-full flex flex-col items-center justify-center px-4 py-3 min-h-0">
-            <p className="text-5xl md:text-6xl font-bold tracking-tight" style={{ color: cardText, lineHeight: 1.1 }}>{cardValue}</p>
+          <div className="w-full h-1.5 shrink-0 rounded-t-xl" style={{ backgroundColor: accent }} />
+          <div className="flex-1 w-full flex flex-col items-center justify-center px-2 py-2 min-h-0">
+            <p className={`${valueFontClass} font-bold tracking-tight text-center break-all`} style={{ color: cardText, lineHeight: 1.1, textShadow: isDark ? '0 1px 2px rgba(0,0,0,0.2)' : 'none' }}>{cardValue}</p>
           </div>
         </div>
       );
@@ -433,17 +521,20 @@ export function ChartRenderer(
     case 'matrix': {
       const firstRow = rawData[0] as any;
       const cols = Object.keys(firstRow || {});
-      const thBg = isDark ? 'rgba(255,255,255,0.05)' : '#f9fafb';
-      const thColor = isDark ? '#94a3b8' : '#4b5563';
+      const thBg = isDark ? 'rgba(255,255,255,0.06)' : '#f8fafc';
+      const thColor = isDark ? '#94a3b8' : '#475569';
       const tdColor = isDark ? '#e2e8f0' : '#111827';
-      const borderColor = isDark ? 'rgba(255,255,255,0.08)' : '#e5e7eb';
+      const borderColor = isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0';
+      // Responsive styling for mobile
+      const cellPadding = isMobile ? 'px-2 py-1.5' : 'px-4 py-2.5';
+      const fontSize = isMobile ? 'text-xs' : 'text-sm';
       return (
-        <div className="h-full overflow-auto">
-          <table className="w-full text-base">
+        <div className="h-full overflow-auto rounded-xl" style={{ border: `1px solid ${borderColor}`, boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.1)' : '0 2px 8px rgba(0,0,0,0.04)' }}>
+          <table className={`w-full ${isMobile ? 'text-sm' : 'text-base'}`}>
             <thead className="sticky top-0">
               <tr>
                 {cols.map((col) => (
-                  <th key={col} className="px-3 py-2 text-left text-sm" style={{ backgroundColor: thBg, color: thColor }}>{col}</th>
+                  <th key={col} className={`${cellPadding} text-left ${fontSize} font-semibold first:rounded-tl-xl last:rounded-tr-xl whitespace-nowrap`} style={{ backgroundColor: thBg, color: thColor }}>{col}</th>
                 ))}
               </tr>
             </thead>
@@ -455,7 +546,7 @@ export function ChartRenderer(
                   style={{ borderTop: idx === 0 ? 'none' : `1px solid ${borderColor}` }}
                 >
                   {cols.map((col) => (
-                    <td key={col} className="px-3 py-2 text-sm" style={{ color: tdColor }}>{String(row[col] ?? '')}</td>
+                    <td key={col} className={`${cellPadding} ${fontSize}`} style={{ color: tdColor }}>{String(row[col] ?? '')}</td>
                   ))}
                 </tr>
               ))}
@@ -465,20 +556,124 @@ export function ChartRenderer(
       );
     }
     case 'slicer': {
-      const filterField = config.filterField ?? (config as any).filterField;
-      const uniqueValues = filterField ? Array.from(new Set((rawData as any[]).map((d) => d[filterField]))) : [];
+      // Support both filterField and field for backward compatibility
+      const filterField = config.filterField || config.field;
+      if (!filterField) {
+        return (
+          <div className="flex flex-col items-center justify-center h-full text-base" style={{ color: isDark ? '#94a3b8' : '#6b7280' }}>
+            <p className="font-medium mb-1">Slicer</p>
+            <p className="text-sm opacity-75">Drag a field to the Field bucket</p>
+          </div>
+        );
+      }
+      const uniqueValues = Array.from(new Set((rawData as any[]).map((d) => d[filterField]))).filter(v => v !== null && v !== undefined);
       const filterHeaderColor = isDark ? '#94a3b8' : '#374151';
       const filterBtnBase = isDark
         ? { background: 'rgba(255,255,255,0.06)', color: '#e2e8f0', border: '1px solid rgba(255,255,255,0.1)' }
         : { background: '#f9fafb', color: '#374151', border: '1px solid #e5e7eb' };
       const filterBtnSelected = isDark
-        ? { background: 'rgba(239,68,68,0.25)', color: '#fca5a5', border: '1px solid rgba(239,68,68,0.4)' }
-        : { background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca' };
+        ? { background: '#0078d4', color: '#ffffff', border: '1px solid #106ebe' }
+        : { background: '#0078d4', color: '#ffffff', border: '1px solid #106ebe' };
       const selectedFilters = config.selectedFilters ?? [];
+      const slicerStyle = config.slicerStyle || 'list'; // Default to list
+
+      // Dropdown style
+      if (slicerStyle === 'dropdown') {
+        return (
+          <div className="h-full flex flex-col min-h-0">
+            <div className="px-3 py-2 border-b shrink-0" style={{ borderColor: isDark ? 'rgba(255,255,255,0.08)' : '#f3f4f6' }}>
+              <p className="text-sm font-semibold truncate mb-2" style={{ color: filterHeaderColor }}>{filterField}</p>
+              <div className="flex gap-2">
+                <select
+                  className="flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-all"
+                  style={{
+                    ...filterBtnBase,
+                    cursor: 'pointer',
+                    outline: 'none',
+                  }}
+                  value={selectedFilters[0] || ''}
+                  onChange={(e) => {
+                    if (e.target.value && onSlicerChange) {
+                      // Clear previous selection and select new one
+                      selectedFilters.forEach(f => onSlicerChange(f, false));
+                      onSlicerChange(e.target.value, true);
+                    }
+                  }}
+                >
+                  <option value="">Select a value...</option>
+                  {uniqueValues.map((value, index) => (
+                    <option key={index} value={String(value)}>
+                      {String(value)}
+                    </option>
+                  ))}
+                </select>
+                {selectedFilters.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (onSlicerChange) {
+                        selectedFilters.forEach(f => onSlicerChange(f, false));
+                      }
+                    }}
+                    className="px-3 py-2 rounded-lg text-sm font-medium transition-all hover:opacity-80"
+                    style={{
+                      ...filterBtnBase,
+                      cursor: 'pointer',
+                      minWidth: '60px',
+                    }}
+                    title="Clear filter"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      // Tile style
+      if (slicerStyle === 'tile') {
+        return (
+          <div className="h-full flex flex-col min-h-0">
+            <div className="px-3 py-2 border-b shrink-0" style={{ borderColor: isDark ? 'rgba(255,255,255,0.08)' : '#f3f4f6' }}>
+              <p className="text-sm font-semibold truncate" style={{ color: filterHeaderColor }}>{filterField}</p>
+            </div>
+            <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-3">
+              {uniqueValues.length > 0 ? (
+                <div className="grid grid-cols-2 gap-2">
+                  {uniqueValues.map((value, index) => {
+                    const isSelected = selectedFilters.includes(String(value));
+                    return (
+                      <button
+                        key={index}
+                        type="button"
+                        onClick={() => onSlicerChange?.(String(value), !isSelected)}
+                        className="text-center px-3 py-3 rounded-lg text-sm font-medium transition-all hover:shadow-sm"
+                        style={isSelected ? filterBtnSelected : filterBtnBase}
+                        title={String(value)}
+                      >
+                        <div className="truncate">{String(value)}</div>
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-center text-sm py-6" style={{ color: isDark ? '#64748b' : '#6b7280' }}>
+                  <p>No values available</p>
+                  <p className="text-xs mt-1 opacity-75">Check your data source</p>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      }
+
+      // List style (default)
       return (
         <div className="h-full flex flex-col min-h-0">
           <div className="px-3 py-2 border-b shrink-0" style={{ borderColor: isDark ? 'rgba(255,255,255,0.08)' : '#f3f4f6' }}>
-            <p className="text-sm font-medium truncate" style={{ color: filterHeaderColor }}>{filterField || 'Select field'}</p>
+            <p className="text-sm font-semibold truncate" style={{ color: filterHeaderColor }}>{filterField}</p>
           </div>
           <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-3">
             {uniqueValues.length > 0 ? (
@@ -490,8 +685,9 @@ export function ChartRenderer(
                       key={index}
                       type="button"
                       onClick={() => onSlicerChange?.(String(value), !isSelected)}
-                      className="w-full text-left px-3 py-2 rounded-lg text-base transition-colors truncate"
+                      className="w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-all truncate hover:shadow-sm"
                       style={isSelected ? filterBtnSelected : filterBtnBase}
+                      title={String(value)}
                     >
                       {String(value)}
                     </button>
@@ -499,7 +695,10 @@ export function ChartRenderer(
                 })}
               </div>
             ) : (
-              <div className="text-center text-base py-4" style={{ color: isDark ? '#64748b' : '#6b7280' }}>No filter values available</div>
+              <div className="text-center text-sm py-6" style={{ color: isDark ? '#64748b' : '#6b7280' }}>
+                <p>No values available</p>
+                <p className="text-xs mt-1 opacity-75">Check your data source</p>
+              </div>
             )}
           </div>
         </div>

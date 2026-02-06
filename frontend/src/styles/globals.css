@@ -187,3 +187,8 @@
 html {
   font-size: var(--font-size);
 }
+
+/* Dashboard Builder: prevent white bleed in canvas panel (body/root is white) */
+.dashboard-builder-canvas-panel {
+  background: #edeeef !important;
+}

@@ -1,19 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router';
-import { LayoutDashboard, Mail, Lock, ArrowLeft, Eye, EyeOff, Loader2, Shield, Code, MonitorCheck } from 'lucide-react';
+import { LayoutDashboard, ArrowLeft, Loader2, Shield, Code, MonitorCheck, Mail } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import ThemeToggle from './ThemeToggle';
 
+const MicrosoftIcon = () => (
+    <svg width="20" height="20" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="1" y="1" width="9" height="9" fill="#F25022" />
+        <rect x="11" y="1" width="9" height="9" fill="#7FBA00" />
+        <rect x="1" y="11" width="9" height="9" fill="#00A4EF" />
+        <rect x="11" y="11" width="9" height="9" fill="#FFB900" />
+    </svg>
+);
+
 export default function UnifiedLogin() {
     const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
-    const [rememberMe, setRememberMe] = useState(false);
     const [isVisible, setIsVisible] = useState(false);
     const navigate = useNavigate();
-    const { login, loading, error: authError, clearError } = useAuth();
+    const { loginWithMicrosoft, loading, error: authError, clearError, isMsalConfigured } = useAuth();
     const { isDark } = useTheme();
 
     useEffect(() => {
@@ -44,24 +50,11 @@ export default function UnifiedLogin() {
         linkHover: isDark ? '#fecaca' : '#dc2626',
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleMicrosoftSignIn = async () => {
         setError('');
         clearError();
-
-        if (!email.trim()) {
-            setError('Email is required');
-            return;
-        }
-        if (!password) {
-            setError('Password is required');
-            return;
-        }
-
         try {
-            const user = await login(email.trim(), password);
-
-            // Redirect based on user role
+            const user = await loginWithMicrosoft(email.trim() || undefined);
             if (user.role_name === 'admin') {
                 navigate('/admin/dashboard');
             } else if (user.role_name === 'developer') {
@@ -71,8 +64,8 @@ export default function UnifiedLogin() {
             } else {
                 navigate('/');
             }
-        } catch {
-            setError(authError || 'Invalid email or password');
+        } catch (e) {
+            setError(e instanceof Error ? e.message : authError || 'Sign-in failed');
         }
     };
 
@@ -243,8 +236,8 @@ export default function UnifiedLogin() {
                         </p>
                     </div>
 
-                    {/* Login Form */}
-                    <form onSubmit={handleSubmit}>
+                    {/* Sign in with Microsoft */}
+                    <div>
                         {/* Error Message */}
                         {(error || authError) && (
                             <div style={{
@@ -266,190 +259,103 @@ export default function UnifiedLogin() {
                             </div>
                         )}
 
-                        {/* Email Field */}
-                        <div style={{ marginBottom: '20px' }}>
-                            <label style={{
-                                display: 'block',
-                                fontSize: '14px',
-                                fontWeight: 500,
-                                color: colors.text,
-                                marginBottom: '8px'
-                            }}>
-                                Email Address
-                            </label>
-                            <div style={{ position: 'relative' }}>
-                                <Mail style={{
-                                    position: 'absolute',
-                                    left: '16px',
-                                    top: '50%',
-                                    transform: 'translateY(-50%)',
-                                    width: '20px',
-                                    height: '20px',
-                                    color: colors.textMuted
-                                }} />
-                                <input
-                                    type="email"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    className="input-focus"
-                                    style={{
-                                        width: '100%',
-                                        padding: '14px 16px 14px 48px',
-                                        background: colors.inputBg,
-                                        border: `1px solid ${colors.inputBorder}`,
-                                        borderRadius: '12px',
-                                        color: colors.text,
-                                        fontSize: '15px',
-                                        outline: 'none',
-                                        transition: 'all 0.35s cubic-bezier(0.33, 1, 0.68, 1)',
-                                        boxSizing: 'border-box',
-                                    }}
-                                    placeholder="Enter your email"
-                                    autoComplete="email"
-                                />
-                            </div>
-                        </div>
-
-                        {/* Password Field */}
-                        <div style={{ marginBottom: '20px' }}>
-                            <label style={{
-                                display: 'block',
-                                fontSize: '14px',
-                                fontWeight: 500,
-                                color: colors.text,
-                                marginBottom: '8px'
-                            }}>
-                                Password
-                            </label>
-                            <div style={{ position: 'relative' }}>
-                                <Lock style={{
-                                    position: 'absolute',
-                                    left: '16px',
-                                    top: '50%',
-                                    transform: 'translateY(-50%)',
-                                    width: '20px',
-                                    height: '20px',
-                                    color: colors.textMuted
-                                }} />
-                                <input
-                                    type={showPassword ? 'text' : 'password'}
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    className="input-focus"
-                                    style={{
-                                        width: '100%',
-                                        padding: '14px 48px 14px 48px',
-                                        background: colors.inputBg,
-                                        border: `1px solid ${colors.inputBorder}`,
-                                        borderRadius: '12px',
-                                        color: colors.text,
-                                        fontSize: '15px',
-                                        outline: 'none',
-                                        transition: 'all 0.35s cubic-bezier(0.33, 1, 0.68, 1)',
-                                        boxSizing: 'border-box',
-                                    }}
-                                    placeholder="Enter your password"
-                                    autoComplete="current-password"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    style={{
+                        {/* Cache email (optional - pre-fills Microsoft login) */}
+                        {isMsalConfigured && (
+                            <div style={{ marginBottom: '20px' }}>
+                                <label style={{
+                                    display: 'block',
+                                    fontSize: '14px',
+                                    fontWeight: 500,
+                                    color: colors.text,
+                                    marginBottom: '8px'
+                                }}>
+                                    Enter your Cache email
+                                </label>
+                                <div style={{ position: 'relative' }}>
+                                    <Mail style={{
                                         position: 'absolute',
-                                        right: '16px',
+                                        left: '16px',
                                         top: '50%',
                                         transform: 'translateY(-50%)',
-                                        background: 'none',
-                                        border: 'none',
-                                        color: colors.textMuted,
-                                        cursor: 'pointer',
-                                        padding: '4px',
-                                        display: 'flex',
-                                        transition: 'color 0.3s ease',
-                                    }}
-                                    onMouseEnter={(e) => e.currentTarget.style.color = colors.text}
-                                    onMouseLeave={(e) => e.currentTarget.style.color = colors.textMuted}
-                                >
-                                    {showPassword ? <EyeOff style={{ width: '20px', height: '20px' }} /> : <Eye style={{ width: '20px', height: '20px' }} />}
-                                </button>
+                                        width: '20px',
+                                        height: '20px',
+                                        color: colors.textMuted
+                                    }} />
+                                    <input
+                                        type="email"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        className="input-focus"
+                                        style={{
+                                            width: '100%',
+                                            padding: '14px 16px 14px 48px',
+                                            background: colors.inputBg,
+                                            border: `1px solid ${colors.inputBorder}`,
+                                            borderRadius: '12px',
+                                            color: colors.text,
+                                            fontSize: '15px',
+                                            outline: 'none',
+                                            transition: 'all 0.35s cubic-bezier(0.33, 1, 0.68, 1)',
+                                            boxSizing: 'border-box',
+                                        }}
+                                        placeholder="@cachedigitech.com"
+                                        autoComplete="email"
+                                    />
+                                </div>
                             </div>
-                        </div>
+                        )}
 
-                        {/* Remember Me & Forgot Password */}
-                        <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            marginBottom: '24px',
-                        }}>
-                            <label style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                cursor: 'pointer',
-                                gap: '8px',
-                            }}>
-                                <input
-                                    type="checkbox"
-                                    checked={rememberMe}
-                                    onChange={(e) => setRememberMe(e.target.checked)}
-                                    style={{
-                                        width: '16px',
-                                        height: '16px',
-                                        accentColor: '#ef4444',
-                                        cursor: 'pointer',
-                                    }}
-                                />
-                                <span style={{ fontSize: '14px', color: colors.textMuted }}>Remember me</span>
-                            </label>
-                            <a
-                                href="#"
+                        {isMsalConfigured ? (
+                            <button
+                                type="button"
+                                onClick={handleMicrosoftSignIn}
+                                disabled={loading}
+                                className="btn-hover"
                                 style={{
-                                    fontSize: '14px',
-                                    color: colors.linkColor,
-                                    textDecoration: 'none',
-                                    transition: 'color 0.3s ease',
+                                    width: '100%',
+                                    padding: '16px',
+                                    background: 'linear-gradient(135deg, #ef4444, #f97316)',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '12px',
+                                    fontSize: '16px',
+                                    fontWeight: 600,
+                                    cursor: loading ? 'not-allowed' : 'pointer',
+                                    opacity: loading ? 0.6 : 1,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '12px',
+                                    boxShadow: '0 8px 30px rgba(239, 68, 68, 0.4)',
+                                    transition: 'all 0.35s cubic-bezier(0.33, 1, 0.68, 1)',
                                 }}
-                                onMouseEnter={(e) => e.currentTarget.style.color = colors.linkHover}
-                                onMouseLeave={(e) => e.currentTarget.style.color = colors.linkColor}
                             >
-                                Forgot password?
-                            </a>
-                        </div>
-
-                        {/* Submit Button */}
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="btn-hover"
-                            style={{
-                                width: '100%',
+                                {loading ? (
+                                    <>
+                                        <Loader2 style={{ width: '20px', height: '20px', animation: 'spin 1s linear infinite' }} />
+                                        Signing in...
+                                    </>
+                                ) : (
+                                    <>
+                                        <MicrosoftIcon />
+                                        Sign in with Microsoft
+                                    </>
+                                )}
+                            </button>
+                        ) : (
+                            <div style={{
                                 padding: '16px',
-                                background: 'linear-gradient(135deg, #ef4444, #f97316)',
-                                color: 'white',
-                                border: 'none',
                                 borderRadius: '12px',
-                                fontSize: '16px',
-                                fontWeight: 600,
-                                cursor: loading ? 'not-allowed' : 'pointer',
-                                opacity: loading ? 0.6 : 1,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: '8px',
-                                boxShadow: '0 8px 30px rgba(99, 102, 241, 0.4)',
-                                transition: 'all 0.35s cubic-bezier(0.33, 1, 0.68, 1)',
-                            }}
-                        >
-                            {loading ? (
-                                <>
-                                    <Loader2 style={{ width: '20px', height: '20px', animation: 'spin 1s linear infinite' }} />
-                                    Signing in...
-                                </>
-                            ) : (
-                                'Sign In'
-                            )}
-                        </button>
-                    </form>
+                                background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+                                border: `1px dashed ${colors.cardBorder}`,
+                                color: colors.textMuted,
+                                fontSize: '14px',
+                                textAlign: 'center',
+                            }}>
+                                Microsoft sign-in is not configured. Set VITE_AZURE_CLIENT_ID and VITE_AZURE_TENANT_ID in your environment.
+                            </div>
+                        )}
+                    </div>
 
                     {/* Role Info */}
                     <div style={{

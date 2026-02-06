@@ -48,6 +48,7 @@ export const getThemeColors = (isDark: boolean) => ({
     pbiAccent: '#0078d4',
     pbiAccentHover: '#106ebe',
     pbiGreen: '#107c10',
+    accentBg: isDark ? 'rgba(0,120,212,0.12)' : 'rgba(0,120,212,0.08)',
 });
 
 export const getColorPalette = (isDark: boolean) => ({

@@ -11,6 +11,17 @@ import { apiGet } from '../../lib/api';
 import { useTheme } from '../../contexts/ThemeContext';
 import { getThemeColors, getColorPalette } from '../../lib/themeColors';
 
+// Mobile detection hook
+function useIsMobile(breakpoint = 768) {
+  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' && window.innerWidth < breakpoint);
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < breakpoint);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [breakpoint]);
+  return isMobile;
+}
+
 interface AuditLog {
   id: number;
   user_id: number | null;
@@ -36,6 +47,7 @@ export default function AuditLogs() {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
   const palette = getColorPalette(isDark);
+  const isMobile = useIsMobile();
 
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
@@ -139,13 +151,13 @@ export default function AuditLogs() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'flex-start' : 'center', justifyContent: 'space-between', gap: isMobile ? '12px' : '0' }}>
         <div>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 600, color: colors.text, marginBottom: '0.25rem' }}>Audit Logs</h2>
-          <p style={{ color: colors.muted }}>Track all system activities and changes</p>
+          <h2 style={{ fontSize: isMobile ? '1.25rem' : '1.5rem', fontWeight: 600, color: colors.text, marginBottom: '0.25rem' }}>Audit Logs</h2>
+          <p style={{ color: colors.muted, fontSize: isMobile ? '0.875rem' : '1rem' }}>Track all system activities and changes</p>
         </div>
         <button
-          style={{ display: 'flex', alignItems: 'center', padding: '0.5rem 1rem', backgroundColor: '#dc2626', color: 'white', borderRadius: '0.5rem', border: 'none', cursor: 'pointer', transition: 'background-color 0.2s' }}
+          style={{ display: 'flex', alignItems: 'center', padding: isMobile ? '0.4rem 0.75rem' : '0.5rem 1rem', backgroundColor: '#dc2626', color: 'white', borderRadius: '0.5rem', border: 'none', cursor: 'pointer', transition: 'background-color 0.2s', fontSize: isMobile ? '0.875rem' : '1rem' }}
           title="Export (coming soon)"
         >
           <Download className="w-5 h-5 mr-2" />
@@ -158,16 +170,16 @@ export default function AuditLogs() {
       )}
 
       {/* Filters */}
-      <div style={{ backgroundColor: colors.cardBg, borderRadius: '0.75rem', padding: '1.5rem', boxShadow: colors.cardShadow, border: `1px solid ${colors.cardBorder}` }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
-          <div style={{ gridColumn: 'span 2', position: 'relative' }}>
+      <div style={{ backgroundColor: colors.cardBg, borderRadius: '0.75rem', padding: isMobile ? '1rem' : '1.5rem', boxShadow: colors.cardShadow, border: `1px solid ${colors.cardBorder}` }}>
+        <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: '1rem' }}>
+          <div style={{ flex: isMobile ? 'none' : 2, position: 'relative' }}>
             <Search style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', width: '1.25rem', height: '1.25rem', color: colors.muted }} />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search by user, action, or resource..."
-              style={{ width: '100%', paddingLeft: '2.5rem', paddingRight: '1rem', paddingTop: '0.5rem', paddingBottom: '0.5rem', border: `1px solid ${colors.inputBorder}`, borderRadius: '0.5rem', outline: 'none', backgroundColor: colors.inputBg, color: colors.text }}
+              style={{ width: '100%', paddingLeft: '2.5rem', paddingRight: '1rem', paddingTop: '0.5rem', paddingBottom: '0.5rem', border: `1px solid ${colors.inputBorder}`, borderRadius: '0.5rem', outline: 'none', backgroundColor: colors.inputBg, color: colors.text, fontSize: isMobile ? '0.875rem' : '1rem' }}
             />
           </div>
           <select
@@ -175,7 +187,7 @@ export default function AuditLogs() {
             onChange={(e) =>
               setFilterStatus(e.target.value as 'all' | 'success' | 'failed')
             }
-            style={{ padding: '0.5rem 1rem', border: `1px solid ${colors.inputBorder}`, borderRadius: '0.5rem', outline: 'none', backgroundColor: colors.inputBg, color: colors.text }}
+            style={{ padding: '0.5rem 1rem', border: `1px solid ${colors.inputBorder}`, borderRadius: '0.5rem', outline: 'none', backgroundColor: colors.inputBg, color: colors.text, flex: isMobile ? 'none' : 1, fontSize: isMobile ? '0.875rem' : '1rem' }}
           >
             <option value="all">All Status</option>
             <option value="success">Success</option>
@@ -185,7 +197,7 @@ export default function AuditLogs() {
       </div>
 
       {/* Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: isMobile ? '0.75rem' : '1.5rem' }}>
         <div style={{ backgroundColor: colors.cardBg, borderRadius: '0.75rem', padding: '1.5rem', boxShadow: colors.cardShadow, border: `1px solid ${colors.cardBorder}` }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>

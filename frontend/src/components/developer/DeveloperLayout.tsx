@@ -8,7 +8,8 @@ import {
   LogOut,
   Menu,
   X,
-  Code
+  Code,
+  Users,
 } from 'lucide-react';
 import type { User } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -33,6 +34,7 @@ export default function DeveloperLayout({ user, onLogout, children }: DeveloperL
   const navItems = [
     { to: '/developer/dashboard', icon: LayoutDashboard, label: 'My Dashboards' },
     { to: '/developer/builder', icon: Wand2, label: 'Dashboard Builder' },
+    { to: '/developer/dashboard-mapper', icon: Users, label: 'Dashboard Mapper' },
     { to: '/developer/data-mapping', icon: Database, label: 'Data Mapping' },
     { to: '/developer/api-config', icon: Settings, label: 'API Configuration' }
   ];

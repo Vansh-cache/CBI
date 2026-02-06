@@ -4,6 +4,17 @@ import { apiPost, apiGet, apiPut } from '../../lib/api';
 import { useTheme } from '../../contexts/ThemeContext';
 import { getThemeColors, getColorPalette } from '../../lib/themeColors';
 
+// Mobile detection hook
+function useIsMobile(breakpoint = 768) {
+  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' && window.innerWidth < breakpoint);
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < breakpoint);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [breakpoint]);
+  return isMobile;
+}
+
 interface ApiConfig {
   id: number;
   name: string;
@@ -25,6 +36,7 @@ interface APIConfigModalProps {
 }
 
 export default function APIConfigModal({ isOpen, onClose, onSave, editingConfig }: APIConfigModalProps) {
+  const isMobile = useIsMobile();
   const [formData, setFormData] = useState({
     name: '',
     method: 'GET',
@@ -299,36 +311,37 @@ export default function APIConfigModal({ isOpen, onClose, onSave, editingConfig 
         // Show EXACT error details from API - no masking
         let errorMsg = testRes.message || 'Connection test failed';
 
-        // Add request details
-        if (testRes.data) {
-          const data = testRes.data;
+        // Add request details (nested under data.data from API)
+        const requestDetails = testRes.data?.data;
+        if (requestDetails) {
           errorMsg += `\n\nRequest Details:`;
-          errorMsg += `\nStatus: ${data.status} ${data.statusText || ''}`;
-          if (data.url) errorMsg += `\nURL: ${data.url}`;
-          if (data.method) errorMsg += `\nMethod: ${data.method}`;
-          if (data.headers && data.headers.length > 0) {
-            errorMsg += `\nHeaders: ${data.headers.join(', ')}`;
+          errorMsg += `\nStatus: ${requestDetails.status} ${requestDetails.statusText || ''}`;
+          if (requestDetails.url) errorMsg += `\nURL: ${requestDetails.url}`;
+          if (requestDetails.method) errorMsg += `\nMethod: ${requestDetails.method}`;
+          if (requestDetails.headers && requestDetails.headers.length > 0) {
+            errorMsg += `\nHeaders: ${requestDetails.headers.join(', ')}`;
           }
-          if (data.responseData) {
+          if (requestDetails.responseData) {
             try {
-              const responseStr = typeof data.responseData === 'string'
-                ? data.responseData
-                : JSON.stringify(data.responseData);
+              const responseStr = typeof requestDetails.responseData === 'string'
+                ? requestDetails.responseData
+                : JSON.stringify(requestDetails.responseData);
               errorMsg += `\nResponse: ${responseStr.substring(0, 500)}`;
             } catch {
-              errorMsg += `\nResponse: ${String(data.responseData).substring(0, 500)}`;
+              errorMsg += `\nResponse: ${String(requestDetails.responseData).substring(0, 500)}`;
             }
           }
         }
 
-        // Add error details if available
-        if (testRes.details) {
-          const details = testRes.details as any;
+        // Add error details if available (nested under data.details from API)
+        const detailsObj = testRes.data?.details;
+        if (detailsObj) {
+          const details = detailsObj as Record<string, unknown>;
           errorMsg += `\n\nError Details:`;
           if (details.status) errorMsg += `\nHTTP Status: ${details.status} ${details.statusText || ''}`;
           if (details.url) errorMsg += `\nRequested URL: ${details.url}`;
           if (details.method) errorMsg += `\nRequest Method: ${details.method}`;
-          if (details.responseData) {
+          if (details.responseData !== undefined) {
             try {
               const responseStr = typeof details.responseData === 'string'
                 ? details.responseData
@@ -583,15 +596,15 @@ export default function APIConfigModal({ isOpen, onClose, onSave, editingConfig 
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" style={{ padding: isMobile ? '0' : '1rem', alignItems: isMobile ? 'flex-end' : 'center' }}>
       <div
         style={{
           backgroundColor: colors.cardBg,
           boxShadow: colors.cardShadow,
-          borderRadius: '0.5rem',
+          borderRadius: isMobile ? '1rem 1rem 0 0' : '0.5rem',
           width: '100%',
-          maxWidth: '48rem',
-          maxHeight: '90vh',
+          maxWidth: isMobile ? '100%' : '48rem',
+          maxHeight: isMobile ? '95vh' : '90vh',
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column'
@@ -603,12 +616,12 @@ export default function APIConfigModal({ isOpen, onClose, onSave, editingConfig 
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: '1rem 1.5rem',
+            padding: isMobile ? '1rem' : '1rem 1.5rem',
             borderBottom: `1px solid ${colors.cardBorder}`
           }}
         >
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: colors.text }}>
-            {editingConfig ? 'Edit API Configuration' : 'Configure API Data Source'}
+          <h2 style={{ fontSize: isMobile ? '1.0625rem' : '1.25rem', fontWeight: 600, color: colors.text }}>
+            {editingConfig ? 'Edit API Config' : 'Configure API'}
           </h2>
           <button
             onClick={onClose}
@@ -626,7 +639,7 @@ export default function APIConfigModal({ isOpen, onClose, onSave, editingConfig 
         </div>
 
         {/* Content - Scrollable */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem' }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: isMobile ? '1rem' : '1.5rem' }}>
           {/* Basic Info */}
           <div style={{ marginBottom: '1.5rem' }}>
             <h3 style={{ fontWeight: 600, color: colors.text, marginBottom: '1rem' }}>Basic Information</h3>
@@ -1120,17 +1133,19 @@ export default function APIConfigModal({ isOpen, onClose, onSave, editingConfig 
         {/* Footer */}
         <div style={{
           display: 'flex',
-          alignItems: 'center',
+          flexDirection: isMobile ? 'column' : 'row',
+          alignItems: isMobile ? 'stretch' : 'center',
           justifyContent: 'space-between',
-          padding: '1rem 1.5rem',
+          padding: isMobile ? '1rem' : '1rem 1.5rem',
           borderTop: `1px solid ${colors.cardBorder}`,
-          backgroundColor: colors.tableBg
+          backgroundColor: colors.tableBg,
+          gap: isMobile ? '0.75rem' : '0'
         }}>
           <button
             onClick={handleTestConnection}
             disabled={testStatus === 'loading'}
             style={{
-              padding: '0.5rem 1rem',
+              padding: isMobile ? '0.75rem 1rem' : '0.5rem 1rem',
               color: palette.red,
               border: `1px solid ${palette.red}`,
               borderRadius: '0.5rem',
@@ -1138,7 +1153,9 @@ export default function APIConfigModal({ isOpen, onClose, onSave, editingConfig 
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              opacity: testStatus === 'loading' ? 0.5 : 1
+              justifyContent: 'center',
+              opacity: testStatus === 'loading' ? 0.5 : 1,
+              fontSize: isMobile ? '0.9375rem' : '1rem'
             }}
           >
             {testStatus === 'loading' ? (
@@ -1146,49 +1163,53 @@ export default function APIConfigModal({ isOpen, onClose, onSave, editingConfig 
             ) : (
               <Link2 className="w-4 h-4 mr-2" />
             )}
-            Test Connection
+            Test
           </button>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <button
-              onClick={onClose}
-              disabled={saving || savingDraft}
-              style={{
-                padding: '0.5rem 1rem',
-                color: colors.text,
-                background: 'none',
-                border: 'none',
-                borderRadius: '0.5rem',
-                cursor: 'pointer',
-                opacity: (saving || savingDraft) ? 0.5 : 1
-              }}
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleSaveDraft}
-              disabled={saving || savingDraft}
-              style={{
-                padding: '0.5rem 1rem',
-                color: colors.muted,
-                border: `1px solid ${colors.inputBorder}`,
-                borderRadius: '0.5rem',
-                background: 'none',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                opacity: (saving || savingDraft) ? 0.5 : 1
-              }}
-            >
-              {savingDraft && <Loader2 className="w-4 h-4 animate-spin" />}
-              Save as Draft
-            </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexDirection: isMobile ? 'column' : 'row' }}>
+            {!isMobile && (
+              <button
+                onClick={onClose}
+                disabled={saving || savingDraft}
+                style={{
+                  padding: '0.5rem 1rem',
+                  color: colors.text,
+                  background: 'none',
+                  border: 'none',
+                  borderRadius: '0.5rem',
+                  cursor: 'pointer',
+                  opacity: (saving || savingDraft) ? 0.5 : 1
+                }}
+              >
+                Cancel
+              </button>
+            )}
+            {!isMobile && (
+              <button
+                onClick={handleSaveDraft}
+                disabled={saving || savingDraft}
+                style={{
+                  padding: '0.5rem 1rem',
+                  color: colors.muted,
+                  border: `1px solid ${colors.inputBorder}`,
+                  borderRadius: '0.5rem',
+                  background: 'none',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  opacity: (saving || savingDraft) ? 0.5 : 1
+                }}
+              >
+                {savingDraft && <Loader2 className="w-4 h-4 animate-spin" />}
+                Save as Draft
+              </button>
+            )}
             <button
               onClick={handleSave}
               disabled={saving || savingDraft}
               style={{
-                padding: '0.5rem 1rem',
+                padding: isMobile ? '0.75rem 1rem' : '0.5rem 1rem',
                 backgroundColor: '#dc2626',
                 color: 'white',
                 border: 'none',
@@ -1196,12 +1217,15 @@ export default function APIConfigModal({ isOpen, onClose, onSave, editingConfig 
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
+                justifyContent: 'center',
                 gap: '0.5rem',
-                opacity: (saving || savingDraft) ? 0.5 : 1
+                opacity: (saving || savingDraft) ? 0.5 : 1,
+                width: isMobile ? '100%' : 'auto',
+                fontSize: isMobile ? '0.9375rem' : '1rem'
               }}
             >
               {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-              Save & Fetch Data
+              Save & Fetch
             </button>
           </div>
         </div>

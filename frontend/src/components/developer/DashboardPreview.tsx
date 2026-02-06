@@ -8,12 +8,12 @@ import { ChartRenderer, type ChartWidgetConfig } from '../charts/ChartRenderer';
 
 interface Widget {
     id: string;
-    type: 'bar' | 'line' | 'pie' | 'table' | 'stacked-bar' | 'area' | 'donut' | 'treemap' | 'gauge' | 'card' | 'filter';
+    type: string;
     title: string;
     dataKey?: string;
     position: { x: number; y: number };
     size: { width: number; height: number };
-    aggregation?: 'count' | 'sum' | 'first' | 'last' | 'percentage';
+    aggregation?: string;
     field?: string;
     xAxis?: string;
     yAxis?: string;
@@ -22,6 +22,18 @@ interface Widget {
     selectedFilters?: string[];
     datasetId?: number;
     accentColor?: string;
+    valueFormat?: string;
+    dimensions?: string[];
+    measures?: string[];
+    xAxisFields?: string[];
+    yAxisFields?: string[];
+    legendFields?: string[];
+    fieldFields?: string[];
+    filterFields?: string[];
+    xAxisAggregation?: string;
+    yAxisAggregation?: string;
+    legendAggregation?: string;
+    fieldAggregation?: string;
 }
 
 export default function DashboardPreview() {
@@ -61,11 +73,11 @@ export default function DashboardPreview() {
                 if (res.success && res.data) {
                     setDashboardData(res.data);
                     const config = typeof res.data.config === 'string' ? JSON.parse(res.data.config) : res.data.config;
-                    if (config.widgets) {
-                        setWidgets(config.widgets);
-                        // Fetch data for all datasets used by widgets
+                    const widgetsToShow = config.pages?.[0]?.widgets ?? config.widgets;
+                    if (widgetsToShow) {
+                        setWidgets(Array.isArray(widgetsToShow) ? widgetsToShow : []);
                         const datasetIds = new Set<number>();
-                        config.widgets.forEach((w: Widget) => {
+                        (Array.isArray(widgetsToShow) ? widgetsToShow : []).forEach((w: Widget) => {
                             if (w.datasetId) datasetIds.add(w.datasetId);
                         });
                         datasetIds.forEach((datasetId) => fetchDatasetData(datasetId));
@@ -97,10 +109,21 @@ export default function DashboardPreview() {
             yAxis: widget.yAxis,
             legend: widget.legend,
             field: widget.field,
-            aggregation: widget.aggregation,
+            aggregation: widget.aggregation as ChartWidgetConfig['aggregation'],
             filterField: widget.filterField,
             selectedFilters: widget.selectedFilters,
+            datasetId: widget.datasetId,
             accentColor: widget.accentColor,
+            valueFormat: widget.valueFormat,
+            dimensions: widget.dimensions,
+            measures: widget.measures,
+            xAxisFields: widget.xAxisFields,
+            yAxisFields: widget.yAxisFields,
+            legendFields: widget.legendFields,
+            xAxisAggregation: widget.xAxisAggregation as ChartWidgetConfig['xAxisAggregation'],
+            yAxisAggregation: widget.yAxisAggregation as ChartWidgetConfig['yAxisAggregation'],
+            legendAggregation: widget.legendAggregation as ChartWidgetConfig['legendAggregation'],
+            fieldAggregation: widget.fieldAggregation as ChartWidgetConfig['fieldAggregation'],
         };
         return ChartRenderer(config, data, { mode, animations: false });
     };

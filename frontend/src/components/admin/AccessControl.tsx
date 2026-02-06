@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Shield,
   Lock,
@@ -10,6 +10,17 @@ import {
 import { apiGet, apiPost } from '../../lib/api';
 import { useTheme } from '../../contexts/ThemeContext';
 import { getThemeColors, getColorPalette } from '../../lib/themeColors';
+
+// Mobile detection hook
+function useIsMobile(breakpoint = 768) {
+  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' && window.innerWidth < breakpoint);
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < breakpoint);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [breakpoint]);
+  return isMobile;
+}
 
 interface Dashboard {
   id: number;
@@ -57,6 +68,7 @@ export default function AccessControl() {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
   const palette = getColorPalette(isDark);
+  const isMobile = useIsMobile();
 
   const [dashboards, setDashboards] = useState<Dashboard[]>([]);
   const [users, setUsers] = useState<User[]>([]);
@@ -171,10 +183,10 @@ export default function AccessControl() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       <div>
-        <h2 style={{ fontSize: '1.5rem', fontWeight: 600, color: colors.text, marginBottom: '0.25rem' }}>
+        <h2 style={{ fontSize: isMobile ? '1.25rem' : '1.5rem', fontWeight: 600, color: colors.text, marginBottom: '0.25rem' }}>
           Access Control & Permissions
         </h2>
-        <p style={{ color: colors.muted }}>
+        <p style={{ color: colors.muted, fontSize: isMobile ? '0.875rem' : '1rem' }}>
           Assign dashboards to users. Admins and developers see all dashboards; viewers only see
           assigned ones.
         </p>

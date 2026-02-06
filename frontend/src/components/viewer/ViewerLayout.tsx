@@ -18,7 +18,7 @@ export default function ViewerLayout({ user, onLogout, children, dashboardName }
   const navigate = useNavigate();
   const location = useLocation();
   const { isDark } = useTheme();
-  
+
   // Check if we're viewing a specific dashboard
   const isViewingDashboard = location.pathname.startsWith('/viewer/view/');
 
@@ -105,8 +105,8 @@ export default function ViewerLayout({ user, onLogout, children, dashboardName }
             <div style={{ display: 'flex', alignItems: 'center' }}>
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="mobile-menu-btn"
                 style={{
-                  display: 'none',
                   marginRight: '12px',
                   background: 'none',
                   border: 'none',
@@ -138,7 +138,7 @@ export default function ViewerLayout({ user, onLogout, children, dashboardName }
             </div>
 
             {/* Desktop Navigation */}
-            <div style={{
+            <div className="desktop-nav" style={{
               display: 'flex',
               alignItems: 'center',
               gap: '32px'
@@ -204,7 +204,7 @@ export default function ViewerLayout({ user, onLogout, children, dashboardName }
             </div>
 
             {/* Right Section */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+            <div className="desktop-right" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
               <ThemeToggle size="sm" />
 
               {/* User Menu */}
@@ -365,11 +365,27 @@ export default function ViewerLayout({ user, onLogout, children, dashboardName }
         maxWidth: isViewingDashboard ? 'none' : '1400px',
         margin: '0 auto',
         padding: isViewingDashboard ? '0' : '32px 24px',
-        height: isViewingDashboard ? 'calc(100vh - 64px)' : 'auto',
-        overflow: isViewingDashboard ? 'hidden' : 'visible',
+        height: isViewingDashboard ? 'auto' : 'auto',
+        minHeight: isViewingDashboard ? 'calc(100vh - 64px)' : 'auto',
+        overflow: 'visible',
       }}>
         {children}
       </main>
+
+      {/* Responsive styles */}
+      <style>{`
+        .mobile-menu-btn { display: none !important; }
+        .desktop-nav { display: flex !important; }
+        .desktop-right { display: flex !important; }
+        @media (max-width: 767px) {
+          .mobile-menu-btn { display: block !important; }
+          .desktop-nav { display: none !important; }
+          .desktop-right > *:not(:last-child) { display: none !important; }
+        }
+        @media (max-width: 1023px) {
+          .mobile-menu-btn { display: block !important; }
+        }
+      `}</style>
     </div>
   );
 }

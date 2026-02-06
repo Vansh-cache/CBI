@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Code, Mail, Lock, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';

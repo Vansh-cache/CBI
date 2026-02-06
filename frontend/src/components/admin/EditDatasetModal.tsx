@@ -1,7 +1,18 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { getThemeColors } from '../../lib/themeColors';
+
+// Mobile detection hook
+function useIsMobile(breakpoint = 768) {
+  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' && window.innerWidth < breakpoint);
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < breakpoint);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [breakpoint]);
+  return isMobile;
+}
 
 interface Dataset {
   id: number;
@@ -19,6 +30,7 @@ interface EditDatasetModalProps {
 export default function EditDatasetModal({ isOpen, onClose, onSave, dataset }: EditDatasetModalProps) {
   const { isDark } = useTheme();
   const colors = getThemeColors(isDark);
+  const isMobile = useIsMobile();
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -42,10 +54,10 @@ export default function EditDatasetModal({ isOpen, onClose, onSave, dataset }: E
   };
 
   return (
-    <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: '1rem' }}>
-      <div style={{ backgroundColor: colors.cardBg, borderRadius: '0.5rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', width: '100%', maxWidth: '28rem', padding: '1.5rem' }}>
+    <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent: 'center', zIndex: 50, padding: isMobile ? '0' : '1rem' }}>
+      <div style={{ backgroundColor: colors.cardBg, borderRadius: isMobile ? '1rem 1rem 0 0' : '0.5rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', width: '100%', maxWidth: isMobile ? '100%' : '28rem', padding: isMobile ? '1.25rem' : '1.5rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: colors.text }}>Edit Data Source</h2>
+          <h2 style={{ fontSize: isMobile ? '1.125rem' : '1.25rem', fontWeight: 600, color: colors.text }}>Edit Data Source</h2>
           <button
             onClick={onClose}
             style={{ color: colors.muted, backgroundColor: 'transparent', border: 'none', cursor: 'pointer', transition: 'color 0.2s' }}
@@ -54,9 +66,9 @@ export default function EditDatasetModal({ isOpen, onClose, onSave, dataset }: E
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? '0.875rem' : '1rem' }}>
           <div>
-            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: colors.text, marginBottom: '0.5rem' }}>
+            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: colors.text, marginBottom: '0.375rem' }}>
               Name <span style={{ color: '#ef4444' }}>*</span>
             </label>
             <input
@@ -64,13 +76,13 @@ export default function EditDatasetModal({ isOpen, onClose, onSave, dataset }: E
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Data source name"
-              style={{ width: '100%', padding: '0.5rem 1rem', border: `1px solid ${colors.inputBorder}`, borderRadius: '0.5rem', outline: 'none', backgroundColor: colors.inputBg, color: colors.text }}
+              style={{ width: '100%', padding: '0.5rem 0.75rem', border: `1px solid ${colors.inputBorder}`, borderRadius: '0.5rem', outline: 'none', backgroundColor: colors.inputBg, color: colors.text, fontSize: isMobile ? '1rem' : '0.875rem' }}
               required
             />
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: colors.text, marginBottom: '0.5rem' }}>
+            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: colors.text, marginBottom: '0.375rem' }}>
               Description
             </label>
             <textarea
@@ -78,23 +90,23 @@ export default function EditDatasetModal({ isOpen, onClose, onSave, dataset }: E
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Data source description"
               rows={3}
-              style={{ width: '100%', padding: '0.5rem 1rem', border: `1px solid ${colors.inputBorder}`, borderRadius: '0.5rem', outline: 'none', backgroundColor: colors.inputBg, color: colors.text, resize: 'none' }}
+              style={{ width: '100%', padding: '0.5rem 0.75rem', border: `1px solid ${colors.inputBorder}`, borderRadius: '0.5rem', outline: 'none', backgroundColor: colors.inputBg, color: colors.text, resize: 'none', fontSize: isMobile ? '1rem' : '0.875rem' }}
             />
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.75rem', paddingTop: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: isMobile ? 'stretch' : 'flex-end', gap: '0.75rem', paddingTop: isMobile ? '0.75rem' : '1rem' }}>
             <button
               type="button"
               onClick={onClose}
-              style={{ padding: '0.5rem 1rem', color: colors.text, backgroundColor: 'transparent', border: 'none', borderRadius: '0.5rem', cursor: 'pointer', transition: 'background-color 0.2s' }}
+              style={{ flex: isMobile ? 1 : 'none', padding: isMobile ? '0.75rem 1rem' : '0.5rem 1rem', color: colors.text, backgroundColor: 'transparent', border: `1px solid ${colors.inputBorder}`, borderRadius: '0.5rem', cursor: 'pointer', transition: 'background-color 0.2s', fontSize: isMobile ? '0.9375rem' : '1rem' }}
             >
               Cancel
             </button>
             <button
               type="submit"
-              style={{ padding: '0.5rem 1rem', backgroundColor: '#dc2626', color: 'white', borderRadius: '0.5rem', border: 'none', cursor: 'pointer', transition: 'background-color 0.2s' }}
+              style={{ flex: isMobile ? 1 : 'none', padding: isMobile ? '0.75rem 1rem' : '0.5rem 1rem', backgroundColor: '#dc2626', color: 'white', borderRadius: '0.5rem', border: 'none', cursor: 'pointer', transition: 'background-color 0.2s', fontSize: isMobile ? '0.9375rem' : '1rem' }}
             >
-              Save Changes
+              Save
             </button>
           </div>
         </form>

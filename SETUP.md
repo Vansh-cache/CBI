@@ -79,8 +79,33 @@ DB_PORT=3306
 JWT_SECRET=your_super_secret_jwt_key_change_in_production
 JWT_EXPIRE=7d
 
-CORS_ORIGIN=http://localhost:3000
+CORS_ORIGIN=http://localhost:5173
+
+# Microsoft 365 (organization-only sign-in)
+AZURE_CLIENT_ID=your-application-client-id
+AZURE_TENANT_ID=your-tenant-id
+AZURE_CLIENT_SECRET=your-client-secret
 ```
+
+For the frontend, create `frontend/.env` with:
+```
+VITE_API_URL=http://localhost:5000
+VITE_AZURE_CLIENT_ID=your-application-client-id
+VITE_AZURE_TENANT_ID=your-tenant-id
+```
+
+### 3a. Microsoft 365 Integration (Organization-Only Sign-In)
+
+To restrict access to users from your Microsoft 365 organization:
+
+1. Create an app registration in [Azure Portal](https://portal.azure.com) > Microsoft Entra ID > App registrations
+2. Set **Supported account types** to "Accounts in this organizational directory only"
+3. Add **Single-page application** redirect URI: `http://localhost:3000` (dev) or your production URL
+4. Create a **Client secret** under Certificates & secrets
+5. Add **API permissions**: `User.Read`, `openid` (Delegated), `User.Read.All` (Application) — grant admin consent
+6. Run the database migration: `mysql -u root -p bi_platform < backend/database/migrations/add_azure_oid.sql`
+7. Add your admin user: `INSERT INTO users (email, password_hash, first_name, last_name, role_id) VALUES ('admin@yourorg.com', NULL, 'Admin', 'User', 1);`
+8. Sign in with Microsoft — the admin will be matched by email and `azure_oid` will be set
 
 ### 4. Create Upload Directory
 
@@ -115,7 +140,8 @@ npm start
 ## First Login
 
 1. Open `http://localhost:3000` in your browser
-2. Login with default admin credentials:
+2. **With Microsoft 365**: Click "Sign in with Microsoft" (requires Azure app registration)
+3. **Without Microsoft 365** (dev): Use default admin credentials:
    - Email: `admin@biplatform.com`
    - Password: `Admin123!`
 
@@ -161,8 +187,8 @@ cache-bi-platform/
 ## API Endpoints
 
 ### Authentication
-- `POST /api/auth/register` - Register user (Admin/Developer only)
-- `POST /api/auth/login` - Login
+- `POST /api/auth/register` - Register user (Admin only)
+- `POST /api/auth/login` - Sign in with Microsoft (sends `id_token`)
 - `GET /api/auth/me` - Get current user
 
 ### Users
@@ -185,6 +211,9 @@ cache-bi-platform/
 - `POST /api/data/fetch-api` - Fetch data from API
 
 ### Admin
+- `GET /api/admin/organization-users` - List Microsoft 365 org users (admin only)
+- `POST /api/admin/organization-users/assign` - Assign org user to Cache BI with role
+- `PUT /api/admin/organization-users/:id/role` - Update user role
 - `GET /api/admin/api-configs` - List API configurations
 - `POST /api/admin/api-configs` - Create API configuration
 - `PUT /api/admin/api-configs/:id` - Update API configuration

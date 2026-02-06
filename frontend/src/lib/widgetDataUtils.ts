@@ -15,6 +15,10 @@ export interface WidgetLike {
   dimensions?: string[];
   /** Power BI-style: measure IDs or field names for values */
   measures?: string[];
+  /** Multiple columns per bucket (all charts) */
+  xAxisFields?: string[];
+  yAxisFields?: string[];
+  legendFields?: string[];
   /** Per-field aggregations */
   xAxisAggregation?: Aggregation;
   yAxisAggregation?: Aggregation;
@@ -90,7 +94,10 @@ const aggregationCache = new WeakMap<unknown[], Map<string, unknown[]>>();
 function getCacheKey(widget: WidgetLike): string {
   const dims = (widget as WidgetLike & { dimensions?: string[] }).dimensions;
   const meas = (widget as WidgetLike & { measures?: string[] }).measures;
-  return `${widget.xAxis || ''}_${widget.yAxis || ''}_${widget.legend || ''}_${widget.field || ''}_${widget.aggregation || ''}_${widget.xAxisAggregation || ''}_${widget.yAxisAggregation || ''}_${widget.legendAggregation || ''}_${widget.fieldAggregation || ''}_${(dims || []).join(',')}_${(meas || []).join(',')}`;
+  const xF = (widget as WidgetLike & { xAxisFields?: string[] }).xAxisFields;
+  const yF = (widget as WidgetLike & { yAxisFields?: string[] }).yAxisFields;
+  const lF = (widget as WidgetLike & { legendFields?: string[] }).legendFields;
+  return `${widget.xAxis || ''}_${widget.yAxis || ''}_${widget.legend || ''}_${widget.field || ''}_${widget.aggregation || ''}_${widget.xAxisAggregation || ''}_${widget.yAxisAggregation || ''}_${widget.legendAggregation || ''}_${widget.fieldAggregation || ''}_${(dims || []).join(',')}_${(meas || []).join(',')}_${(xF || []).join(',')}_${(yF || []).join(',')}_${(lF || []).join(',')}`;
 }
 
 /**
@@ -113,13 +120,15 @@ export function buildAggregatedSeries(rows: unknown[], widget: WidgetLike): unkn
     return cached;
   }
 
-  const extended = widget as WidgetLike & { dimensions?: string[]; measures?: string[] };
+  const extended = widget as WidgetLike & { dimensions?: string[]; measures?: string[]; xAxisFields?: string[]; yAxisFields?: string[]; legendFields?: string[] };
   const useSemantic = extended.dimensions?.length && (extended.measures?.length || extended.field || extended.yAxis);
 
-  const xKey = useSemantic ? extended.dimensions![0] : widget.xAxis;
-  const legendKey = useSemantic ? extended.dimensions![1] : widget.legend;
-  let yKey = widget.yAxis || widget.field;
-  // Use per-field aggregation if available, otherwise fall back to global aggregation
+  const xKey = useSemantic ? extended.dimensions![0] : (extended.xAxisFields?.[0] ?? widget.xAxis);
+  const legendKey = useSemantic ? extended.dimensions![1] : (extended.legendFields?.length ? undefined : widget.legend);
+  const valueKeys: string[] = extended.yAxisFields?.length
+    ? extended.yAxisFields
+    : (widget.yAxis || widget.field ? [widget.yAxis || widget.field].filter(Boolean) as string[] : []);
+  let yKey = valueKeys[0];
   let agg: Aggregation = widget.yAxisAggregation || widget.fieldAggregation || widget.aggregation || 'sum';
 
   if (useSemantic && extended.measures?.[0]) {
@@ -127,14 +136,15 @@ export function buildAggregatedSeries(rows: unknown[], widget: WidgetLike): unkn
     if (parsed.field) yKey = yKey || parsed.field;
     if (parsed.agg) agg = parsed.agg;
   }
+  if (!yKey && valueKeys.length) yKey = valueKeys[0];
 
   if (!xKey || !yKey) {
     rowCache.set(cacheKey, rows);
     return rows;
   }
 
-  const numeric = inferIsNumericField(rows, yKey);
-  const effectiveAgg: Aggregation = numeric ? (agg as Aggregation) : 'count';
+  const useMultiValue = valueKeys.length > 1;
+  const effectiveAgg: Aggregation = inferIsNumericField(rows, yKey) ? (agg as Aggregation) : 'count';
 
   const map = new Map<string, any>();
 
@@ -142,16 +152,28 @@ export function buildAggregatedSeries(rows: unknown[], widget: WidgetLike): unkn
     const x = r?.[xKey];
     const xLabel = String(x ?? '');
 
-    if (legendKey) {
+    if (useMultiValue) {
+      const k = xLabel;
+      const existing = map.get(k) || { [xKey]: xLabel, __valsByKey: {} as Record<string, number[]> };
+      for (const vk of valueKeys) {
+        if (!existing.__valsByKey[vk]) existing.__valsByKey[vk] = [];
+        const numeric = inferIsNumericField(rows, vk);
+        const v = numeric ? Number(r?.[vk]) || 0 : 1;
+        existing.__valsByKey[vk].push(v);
+      }
+      map.set(k, existing);
+    } else if (legendKey) {
       const l = r?.[legendKey];
       const lLabel = String(l ?? '');
       const k = `${xLabel}||${lLabel}`;
+      const numeric = inferIsNumericField(rows, yKey);
       const v = numeric ? Number(r?.[yKey]) || 0 : 1;
       const existing = map.get(k) || { __x: xLabel, __legend: lLabel, __vals: [] as number[] };
       existing.__vals.push(v);
       map.set(k, existing);
     } else {
       const k = xLabel;
+      const numeric = inferIsNumericField(rows, yKey);
       const v = numeric ? Number(r?.[yKey]) || 0 : 1;
       const existing = map.get(k) || { [xKey]: xLabel, __vals: [] as number[] };
       existing.__vals.push(v);
@@ -161,7 +183,18 @@ export function buildAggregatedSeries(rows: unknown[], widget: WidgetLike): unkn
 
   let result: unknown[];
 
-  if (!legendKey) {
+  if (useMultiValue) {
+    const out: any[] = [];
+    for (const entry of map.values()) {
+      const row: any = { [xKey]: entry[xKey] };
+      for (const vk of valueKeys) {
+        const vals = entry.__valsByKey[vk] || [];
+        row[vk] = aggregate(vals, effectiveAgg);
+      }
+      out.push(row);
+    }
+    result = out;
+  } else if (!legendKey) {
     const out: any[] = [];
     for (const entry of map.values()) {
       out.push({
@@ -203,20 +236,29 @@ export interface PieDonutItem {
 }
 
 /**
- * Pie/donut: nameKey = legend || xAxis, valueKey = yAxis || field; sum by name.
+ * Pie/donut/funnel: nameKey = legend || xAxis, valueKey = yAxis || field.
+ * Groups by name and applies value aggregation (yAxisAggregation | fieldAggregation | sum).
  */
 export function getPieDonutData(rows: unknown[], widget: WidgetLike): PieDonutItem[] {
-  const nameKey = widget.legend || widget.xAxis;
-  const valueKey = widget.yAxis || widget.field;
+  const ext = widget as WidgetLike & { xAxisFields?: string[]; yAxisFields?: string[]; legendFields?: string[] };
+  const nameKey = ext.legendFields?.[0] ?? ext.xAxisFields?.[0] ?? widget.legend ?? widget.xAxis;
+  const valueKey = ext.yAxisFields?.[0] ?? widget.yAxis ?? widget.field;
   if (!nameKey || !valueKey) return [];
 
-  return (rows as any[]).reduce((acc: PieDonutItem[], row) => {
+  const agg: Aggregation = widget.yAxisAggregation || widget.fieldAggregation || widget.aggregation || 'sum';
+  const numeric = inferIsNumericField(rows, valueKey);
+  const effectiveAgg: Aggregation = numeric ? (agg as Aggregation) : 'count';
+
+  const byName = new Map<string, number[]>();
+  for (const row of rows as any[]) {
     const name = String(row?.[nameKey] ?? '');
-    const v = Number(row?.[valueKey]);
-    const value = Number.isFinite(v) ? v : 1;
-    const found = acc.find((x) => x.name === name);
-    if (found) found.value += value;
-    else acc.push({ name, value });
-    return acc;
-  }, []);
+    const v = numeric ? (Number(row?.[valueKey]) || 0) : 1;
+    if (!byName.has(name)) byName.set(name, []);
+    byName.get(name)!.push(v);
+  }
+
+  return Array.from(byName.entries()).map(([name, vals]) => ({
+    name,
+    value: aggregate(vals, effectiveAgg),
+  }));
 }

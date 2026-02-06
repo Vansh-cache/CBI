@@ -77,13 +77,20 @@ export const CHART_REGISTRY: ChartMeta[] = [
 const metaByType = new Map<ChartType, ChartMeta>();
 CHART_REGISTRY.forEach((m) => metaByType.set(m.chartType, m));
 
-/** Legacy widget "type" (filter) maps to slicer in registry. */
+/** Legacy widget "type" (filter) maps to slicer in registry. Aliases map to a canonical type for validation. */
 const TYPE_TO_CHART: Record<string, ChartType> = {
   bar: 'bar',
   'stacked-bar': 'stacked-bar',
+  '100-stacked-bar': 'stacked-bar',
   column: 'column',
+  'stacked-column': 'column',
+  '100-stacked-column': 'column',
   line: 'line',
   area: 'area',
+  'stacked-area': 'area',
+  'line-clustered': 'combo',
+  'line-stacked': 'combo',
+  ribbon: 'area',
   pie: 'pie',
   donut: 'donut',
   table: 'table',
@@ -99,7 +106,12 @@ const TYPE_TO_CHART: Record<string, ChartType> = {
   treemap: 'treemap',
   combo: 'combo',
   gauge: 'gauge',
+  map: 'maps',
   maps: 'maps',
+  'filled-map': 'maps',
+  'azure-map': 'maps',
+  'shape-map': 'maps',
+  'arcgis-map': 'maps',
   'decomposition-tree': 'decomposition-tree',
   'key-influencers': 'key-influencers',
 };

@@ -3,7 +3,7 @@
  * All requests include Authorization: Bearer <token> when token is present.
  */
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
 function getToken(): string | null {
   return localStorage.getItem('token');

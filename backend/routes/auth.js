@@ -19,13 +19,8 @@ const registerValidation = [
     body('role_id').isInt({ min: 1, max: 3 })
 ];
 
-const loginValidation = [
-    body('email').isEmail().normalizeEmail(),
-    body('password').notEmpty()
-];
-
 // Routes
-router.post('/register', 
+router.post('/register',
     authenticate,
     hasRole('admin'),
     registerValidation,
@@ -33,13 +28,12 @@ router.post('/register',
     authController.register
 );
 
-router.post('/login', 
-    loginValidation,
+router.post('/login',
     auditLog('user.login', 'user'),
-    authController.login
+    authController.loginMicrosoft
 );
 
-router.get('/me', 
+router.get('/me',
     authenticate,
     authController.getMe
 );

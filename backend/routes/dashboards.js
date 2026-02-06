@@ -32,6 +32,11 @@ router.get('/',
     dashboardController.getDashboards
 );
 
+router.get('/assignments', 
+    hasPermission('dashboards.read'),
+    dashboardController.getAllAssignments
+);
+
 router.get('/:id', 
     hasPermission('dashboards.read'),
     dashboardController.getDashboardById
@@ -65,6 +70,11 @@ router.post('/:id/assign',
     ],
     auditLog('dashboard.assign', 'dashboard'),
     dashboardController.assignDashboard
+);
+
+router.delete('/:id/assign/:userId', 
+    hasPermission('dashboards.assign'),
+    dashboardController.unassignDashboard
 );
 
 router.get('/:id/assignments', 

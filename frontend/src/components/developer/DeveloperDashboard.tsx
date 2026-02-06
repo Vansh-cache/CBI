@@ -3,6 +3,7 @@ import type { User } from '../../contexts/AuthContext';
 import DeveloperLayout from './DeveloperLayout';
 import DeveloperHome from './DeveloperHome';
 import DashboardBuilder from './DashboardBuilder';
+import DashboardMapper from './DashboardMapper';
 import DataMapping from './DataMapping';
 import APIConfiguration from './APIConfiguration';
 import DashboardPreview from './DashboardPreview';
@@ -34,6 +35,7 @@ export default function DeveloperDashboard({ user, onLogout }: DeveloperDashboar
       <Routes>
         <Route path="/" element={<Navigate to="/developer/dashboard" replace />} />
         <Route path="/dashboard" element={<DeveloperHome />} />
+        <Route path="/dashboard-mapper" element={<DashboardMapper />} />
         <Route path="/data-mapping" element={<DataMapping />} />
         <Route path="/api-config" element={<APIConfiguration />} />
       </Routes>

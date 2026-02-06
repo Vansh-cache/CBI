@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router';
+import { useEffect, useState } from 'react';
 import { useAuth } from './contexts/AuthContext';
 import AdminLogin from './components/admin/AdminLogin';
 import AdminDashboard from './components/admin/AdminDashboard';
@@ -8,6 +9,7 @@ import ViewerLogin from './components/viewer/ViewerLogin';
 import ViewerDashboard from './components/viewer/ViewerDashboard';
 import LandingPage from './components/LandingPage';
 import UnifiedLogin from './components/shared/UnifiedLogin';
+import { LoadingScreen } from './components/shared/LoadingScreen';
 
 function RoleRedirect({ role }: { role: string }) {
   if (role === 'admin') return <Navigate to="/admin/dashboard" replace />;
@@ -18,13 +20,15 @@ function RoleRedirect({ role }: { role: string }) {
 
 function App() {
   const { user, loading, logout } = useAuth();
+  const [minDelayElapsed, setMinDelayElapsed] = useState(false);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-gray-500">Loading...</div>
-      </div>
-    );
+  useEffect(() => {
+    const timer = setTimeout(() => setMinDelayElapsed(true), 3500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (loading || !minDelayElapsed) {
+    return <LoadingScreen message="Loading..." />;
   }
 
   return (

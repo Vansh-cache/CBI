@@ -14,10 +14,30 @@ require('dotenv').config();
 const app = express();
 const server = http.createServer(app);
 
+const defaultCorsOrigins = ['http://localhost:3000', 'http://localhost:3001'];
+const envCorsOrigins = process.env.CORS_ORIGIN
+    ? process.env.CORS_ORIGIN.split(',').map((origin) => origin.trim()).filter(Boolean)
+    : [];
+const allowedCorsOrigins = Array.from(
+    new Set([...(defaultCorsOrigins || []), ...(envCorsOrigins || [])])
+);
+
+const isCorsOriginAllowed = (origin, callback) => {
+    if (!origin) {
+        return callback(null, true);
+    }
+
+    if (allowedCorsOrigins.includes(origin)) {
+        return callback(null, true);
+    }
+
+    return callback(new Error('Not allowed by CORS'));
+};
+
 // Socket.IO setup
 const io = new Server(server, {
     cors: {
-        origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+        origin: isCorsOriginAllowed,
         methods: ['GET', 'POST']
     }
 });
@@ -25,7 +45,7 @@ const io = new Server(server, {
 // Middleware
 app.use(helmet());
 app.use(cors({
-    origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+    origin: isCorsOriginAllowed,
     credentials: true
 }));
 app.use(express.json({ limit: '50mb' }));
@@ -131,8 +151,8 @@ app.use((req, res) => {
 
 const PORT = process.env.PORT || 5000;
 
-server.listen(PORT, () => {
-    console.log(`✓ Server running on port ${PORT}`);
+server.listen(PORT, '0.0.0.0', () => {
+    console.log(`✓ Server running on 0.0.0.0:${PORT}`);
     console.log(`✓ Environment: ${process.env.NODE_ENV || 'development'}`);
 });
 

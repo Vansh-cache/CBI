@@ -360,6 +360,50 @@ const assignDashboard = async (req, res) => {
 };
 
 /**
+ * Unassign dashboard from user
+ */
+const unassignDashboard = async (req, res) => {
+    try {
+        const dashboard_id = req.params.id;
+        const user_id = req.params.userId;
+
+        await pool.query(
+            'DELETE FROM dashboard_assignments WHERE dashboard_id = ? AND user_id = ?',
+            [dashboard_id, user_id]
+        );
+
+        res.json({
+            success: true,
+            message: 'Dashboard unassigned successfully'
+        });
+    } catch (error) {
+        console.error('Unassign dashboard error:', error);
+        res.status(500).json({ success: false, message: 'Error unassigning dashboard' });
+    }
+};
+
+/**
+ * Get all dashboard assignments (for mapping view)
+ */
+const getAllAssignments = async (req, res) => {
+    try {
+        const [assignments] = await pool.query(
+            `SELECT da.*, d.name as dashboard_name, u.email as user_email, u.first_name, u.last_name
+             FROM dashboard_assignments da
+             JOIN dashboards d ON da.dashboard_id = d.id
+             JOIN users u ON da.user_id = u.id
+             WHERE d.is_active = TRUE
+             ORDER BY u.last_name, u.first_name, d.name`
+        );
+
+        res.json({ success: true, data: assignments });
+    } catch (error) {
+        console.error('Get all assignments error:', error);
+        res.status(500).json({ success: false, message: 'Error fetching assignments' });
+    }
+};
+
+/**
  * Get dashboard assignments
  */
 const getDashboardAssignments = async (req, res) => {
@@ -390,5 +434,7 @@ module.exports = {
     updateDashboard,
     deleteDashboard,
     assignDashboard,
+    unassignDashboard,
+    getAllAssignments,
     getDashboardAssignments
 };

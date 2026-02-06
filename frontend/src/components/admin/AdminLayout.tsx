@@ -1,8 +1,9 @@
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { NavLink, useNavigate } from 'react-router';
 import {
   LayoutDashboard,
   Users,
+  UserPlus,
   Database,
   Shield,
   FileText,
@@ -13,7 +14,6 @@ import {
 import type { User } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import ThemeToggle from '../shared/ThemeToggle';
-import { useState } from 'react';
 
 interface AdminLayoutProps {
   user: User;
@@ -21,10 +21,22 @@ interface AdminLayoutProps {
   children: ReactNode;
 }
 
+// Mobile detection hook
+function useIsMobile(breakpoint = 768) {
+  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' && window.innerWidth < breakpoint);
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < breakpoint);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [breakpoint]);
+  return isMobile;
+}
+
 export default function AdminLayout({ user, onLogout, children }: AdminLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const navigate = useNavigate();
   const { isDark } = useTheme();
+  const isMobile = useIsMobile();
 
   const handleLogout = () => {
     onLogout();
@@ -34,6 +46,7 @@ export default function AdminLayout({ user, onLogout, children }: AdminLayoutPro
   const navItems = [
     { to: '/admin/dashboard', icon: LayoutDashboard, label: 'Overview' },
     { to: '/admin/users', icon: Users, label: 'User Management' },
+    { to: '/admin/organization-users', icon: UserPlus, label: 'Organization Users' },
     { to: '/admin/data-sources', icon: Database, label: 'Data Sources' },
     { to: '/admin/access-control', icon: Shield, label: 'Access Control' },
     { to: '/admin/audit-logs', icon: FileText, label: 'Audit Logs' }
@@ -107,15 +120,15 @@ export default function AdminLayout({ user, onLogout, children }: AdminLayoutPro
 
       {/* Sidebar */}
       <aside style={{
-        position: sidebarOpen ? 'fixed' : 'relative',
-        inset: sidebarOpen ? '0 auto 0 0' : undefined,
+        position: isMobile ? 'fixed' : 'relative',
+        inset: isMobile ? '0 auto 0 0' : undefined,
         width: '260px',
         background: colors.sidebar,
         borderRight: `1px solid ${colors.sidebarBorder}`,
         backdropFilter: 'blur(20px)',
         zIndex: 30,
         boxShadow: isDark ? '4px 0 24px rgba(0,0,0,0.2)' : '4px 0 24px rgba(0,0,0,0.06)',
-        transform: sidebarOpen ? 'translateX(0)' : undefined,
+        transform: isMobile ? (sidebarOpen ? 'translateX(0)' : 'translateX(-100%)') : 'translateX(0)',
         transition: 'transform 0.35s cubic-bezier(0.33, 1, 0.68, 1)',
         display: 'flex',
         flexDirection: 'column',
@@ -149,7 +162,7 @@ export default function AdminLayout({ user, onLogout, children }: AdminLayoutPro
               Admin Portal
             </span>
           </div>
-          {sidebarOpen && (
+          {isMobile && (
             <button
               onClick={() => setSidebarOpen(false)}
               style={{
@@ -284,16 +297,18 @@ export default function AdminLayout({ user, onLogout, children }: AdminLayoutPro
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '0 24px',
+          padding: isMobile ? '0 12px' : '0 24px',
           position: 'sticky',
           top: 0,
           zIndex: 10,
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '8px' : '16px' }}>
             <button
               onClick={() => setSidebarOpen(true)}
               style={{
-                display: 'none',
+                display: isMobile ? 'flex' : 'none',
+                alignItems: 'center',
+                justifyContent: 'center',
                 background: 'none',
                 border: 'none',
                 color: colors.textMuted,
@@ -304,7 +319,7 @@ export default function AdminLayout({ user, onLogout, children }: AdminLayoutPro
               <Menu style={{ width: '24px', height: '24px' }} />
             </button>
             <h1 style={{
-              fontSize: '20px',
+              fontSize: isMobile ? '16px' : '20px',
               fontWeight: 600,
               color: colors.text,
               margin: 0,
@@ -312,16 +327,18 @@ export default function AdminLayout({ user, onLogout, children }: AdminLayoutPro
               Admin Dashboard
             </h1>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '12px' : '20px' }}>
             <ThemeToggle size="sm" />
-            <span style={{ fontSize: '14px', color: colors.textMuted }}>
-              {new Date().toLocaleDateString('en-US', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-              })}
-            </span>
+            {!isMobile && (
+              <span style={{ fontSize: '14px', color: colors.textMuted }}>
+                {new Date().toLocaleDateString('en-US', {
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                })}
+              </span>
+            )}
           </div>
         </header>
 
@@ -329,7 +346,7 @@ export default function AdminLayout({ user, onLogout, children }: AdminLayoutPro
         <main className="animate-fade-in" style={{
           flex: 1,
           overflowY: 'auto',
-          padding: '24px',
+          padding: isMobile ? '12px' : '24px',
           background: 'transparent',
         }}>
           <style>{`
