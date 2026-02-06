@@ -442,7 +442,7 @@ export default function ZohoAPIModal({ isOpen, onClose, onSave }: ZohoAPIModalPr
           <button
             onClick={handleTestConnection}
             disabled={testStatus === 'loading'}
-            style={{ padding: '0.5rem 1rem', color: '#a855f7', border: '1px solid #a855f7', borderRadius: '0.5rem', backgroundColor: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: testStatus === 'loading' ? 0.5 : 1, transition: 'background-color 0.2s' }}
+            style={{ padding: '0.5rem 1rem', color: '#ef4444', border: '1px solid #ef4444', borderRadius: '0.5rem', backgroundColor: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: testStatus === 'loading' ? 0.5 : 1, transition: 'background-color 0.2s' }}
           >
             {testStatus === 'loading' ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -471,7 +471,7 @@ export default function ZohoAPIModal({ isOpen, onClose, onSave }: ZohoAPIModalPr
             <button
               onClick={handleSave}
               disabled={saving || savingDraft}
-              style={{ padding: '0.5rem 1rem', backgroundColor: '#a855f7', color: 'white', borderRadius: '0.5rem', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: (saving || savingDraft) ? 0.5 : 1, transition: 'background-color 0.2s' }}
+              style={{ padding: '0.5rem 1rem', backgroundColor: '#ef4444', color: 'white', borderRadius: '0.5rem', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: (saving || savingDraft) ? 0.5 : 1, transition: 'background-color 0.2s' }}
             >
               {saving && <Loader2 className="w-4 h-4 animate-spin" />}
               Save & Fetch Data

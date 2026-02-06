@@ -1,7 +1,7 @@
 {
-  "name": "enterprise-bi-platform",
+  "name": "cache-bi-platform",
   "version": "1.0.0",
-  "description": "Enterprise visualization platform inspired by Power BI",
+  "description": "Cache BI - visualization platform inspired by Power BI",
   "main": "index.js",
   "scripts": {
     "dev": "concurrently \"npm run server\" \"npm run client\"",
@@ -15,7 +15,7 @@
     "bi",
     "visualization",
     "dashboard",
-    "enterprise"
+    "cache-bi"
   ],
   "author": "",
   "license": "ISC",

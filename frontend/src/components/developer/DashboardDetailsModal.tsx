@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Save, Loader2 } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { getThemeColors } from '../../lib/themeColors';
@@ -73,7 +73,7 @@ export default function DashboardDetailsModal({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-[99999]" style={{ zIndex: 99999 }}>
-      <div style={{ backgroundColor: colors.modalBg, borderColor: colors.cardBorder }} className="rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col relative border" style={{ zIndex: 100000, backgroundColor: colors.modalBg }}>
+      <div style={{ backgroundColor: colors.modalBg, borderColor: colors.cardBorder, zIndex: 100000 }} className="rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col relative border">
         <div style={{ borderColor: colors.cardBorder }} className="flex items-center justify-between p-6 border-b">
           <div>
             <h2 style={{ color: colors.text }} className="text-xl font-semibold">Dashboard Details</h2>

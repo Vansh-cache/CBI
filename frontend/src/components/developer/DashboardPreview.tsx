@@ -102,7 +102,7 @@ export default function DashboardPreview() {
             selectedFilters: widget.selectedFilters,
             accentColor: widget.accentColor,
         };
-        return ChartRenderer(config, data, { mode });
+        return ChartRenderer(config, data, { mode, animations: false });
     };
 
     if (loading) {

@@ -1,4 +1,4 @@
-# Enterprise BI Platform - Setup Guide
+# Cache BI Platform - Setup Guide
 
 ## Prerequisites
 
@@ -122,7 +122,7 @@ npm start
 ## Application Structure
 
 ```
-enterprise-bi-platform/
+cache-bi-platform/
 ├── backend/
 │   ├── controllers/      # Request handlers
 │   ├── database/         # DB schema and connection

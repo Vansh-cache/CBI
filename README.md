@@ -1,6 +1,6 @@
-# Enterprise BI Visualization Platform
+# Cache BI Visualization Platform
 
-A production-ready enterprise visualization platform inspired by Power BI, built with React, Node.js, Express, and MySQL.
+A production-ready Cache BI visualization platform inspired by Power BI, built with React, Node.js, Express, and MySQL.
 
 ## Architecture
 

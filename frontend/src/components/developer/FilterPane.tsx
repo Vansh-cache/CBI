@@ -3,7 +3,7 @@
  * Power BI-like filter pane with page, visual, and report-level filters
  */
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Filter, X, ChevronDown, ChevronRight, Search, Check } from 'lucide-react';
 
 export type FilterLevel = 'visual' | 'page' | 'report';
@@ -34,6 +34,116 @@ interface FilterPaneProps {
     isDark: boolean;
     colors: any;
 }
+
+interface FilterItemProps {
+    filter: FilterRule;
+    onUpdate: (updates: Partial<FilterRule>) => void;
+    onRemove: () => void;
+    isDark: boolean;
+    colors: any;
+}
+
+const FilterItem: React.FC<FilterItemProps> = ({
+    filter,
+    onUpdate,
+    onRemove,
+    isDark,
+    colors
+}) => {
+    const [isExpanded, setIsExpanded] = useState(false);
+    const [searchValue, setSearchValue] = useState('');
+
+    // Mock unique values for the field (in real app, fetch from dataset)
+    const uniqueValues = ['Value 1', 'Value 2', 'Value 3', 'Value 4', 'Value 5'];
+    const filteredValues = uniqueValues.filter(v =>
+        v.toLowerCase().includes(searchValue.toLowerCase())
+    );
+
+    const toggleValue = (value: string) => {
+        const currentValues = filter.values || [];
+        const newValues = currentValues.includes(value)
+            ? currentValues.filter(v => v !== value)
+            : [...currentValues, value];
+        onUpdate({ values: newValues });
+    };
+
+    return (
+        <div
+            className="border rounded-lg overflow-hidden"
+            style={{
+                borderColor: filter.isEnabled ? colors.cardBorder : colors.muted,
+                opacity: filter.isEnabled ? 1 : 0.6
+            }}
+        >
+            <div className="px-3 py-2 flex items-center justify-between" style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : '#f9fafb' }}>
+                <div className="flex items-center gap-2 flex-1">
+                    <input
+                        type="checkbox"
+                        checked={filter.isEnabled}
+                        onChange={(e) => onUpdate({ isEnabled: e.target.checked })}
+                        className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
+                    />
+                    <button
+                        onClick={() => setIsExpanded(!isExpanded)}
+                        className="flex items-center gap-1 text-sm font-medium"
+                        style={{ color: colors.text }}
+                    >
+                        {isExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                        {filter.field}
+                    </button>
+                </div>
+                <button
+                    onClick={onRemove}
+                    className="p-1 hover:text-red-600 transition-colors"
+                    style={{ color: colors.muted }}
+                >
+                    <X className="w-4 h-4" />
+                </button>
+            </div>
+
+            {isExpanded && (
+                <div className="p-3 border-t space-y-2" style={{ borderColor: colors.cardBorder }}>
+                    <div className="relative">
+                        <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3" style={{ color: colors.muted }} />
+                        <input
+                            type="text"
+                            value={searchValue}
+                            onChange={(e) => setSearchValue(e.target.value)}
+                            placeholder="Search values..."
+                            className="w-full pl-7 pr-2 py-1.5 text-xs border rounded focus:ring-1 focus:ring-indigo-500 outline-none"
+                            style={{ backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.text }}
+                        />
+                    </div>
+
+                    <div className="max-h-40 overflow-y-auto space-y-1">
+                        {filteredValues.map(value => (
+                            <label
+                                key={value}
+                                className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
+                            >
+                                <input
+                                    type="checkbox"
+                                    checked={filter.values?.includes(value) || false}
+                                    onChange={() => toggleValue(value)}
+                                    className="w-3 h-3 text-indigo-600 rounded focus:ring-indigo-500"
+                                />
+                                <span className="text-xs" style={{ color: colors.text }}>{value}</span>
+                            </label>
+                        ))}
+                    </div>
+
+                    {filter.values && filter.values.length > 0 && (
+                        <div className="pt-2 border-t" style={{ borderColor: colors.cardBorder }}>
+                            <span className="text-xs" style={{ color: colors.muted }}>
+                                {filter.values.length} selected
+                            </span>
+                        </div>
+                    )}
+                </div>
+            )}
+        </div>
+    );
+};
 
 export default function FilterPane({
     filters,
@@ -107,8 +217,8 @@ export default function FilterPane({
                             <span
                                 className="px-2 py-0.5 rounded-full text-xs"
                                 style={{
-                                    backgroundColor: isDark ? 'rgba(99, 102, 241, 0.2)' : 'rgba(99, 102, 241, 0.1)',
-                                    color: '#6366f1'
+                                    backgroundColor: isDark ? 'rgba(239, 68, 68, 0.2)' : 'rgba(239, 68, 68, 0.1)',
+                                    color: '#ef4444'
                                 }}
                             >
                                 {levelFilters.length}
@@ -135,7 +245,6 @@ export default function FilterPane({
                             <FilterItem
                                 key={filter.id}
                                 filter={filter}
-                                availableFields={availableFields}
                                 onUpdate={(updates) => onUpdateFilter(filter.id, updates)}
                                 onRemove={() => onRemoveFilter(filter.id)}
                                 isDark={isDark}
@@ -233,112 +342,5 @@ export default function FilterPane({
     );
 }
 
-function FilterItem({
-    filter,
-    availableFields,
-    onUpdate,
-    onRemove,
-    isDark,
-    colors
-}: {
-    filter: FilterRule;
-    availableFields: { name: string; type: string }[];
-    onUpdate: (updates: Partial<FilterRule>) => void;
-    onRemove: () => void;
-    isDark: boolean;
-    colors: any;
-}) {
-    const [isExpanded, setIsExpanded] = useState(false);
-    const [searchValue, setSearchValue] = useState('');
 
-    // Mock unique values for the field (in real app, fetch from dataset)
-    const uniqueValues = ['Value 1', 'Value 2', 'Value 3', 'Value 4', 'Value 5'];
-    const filteredValues = uniqueValues.filter(v =>
-        v.toLowerCase().includes(searchValue.toLowerCase())
-    );
 
-    const toggleValue = (value: string) => {
-        const currentValues = filter.values || [];
-        const newValues = currentValues.includes(value)
-            ? currentValues.filter(v => v !== value)
-            : [...currentValues, value];
-        onUpdate({ values: newValues });
-    };
-
-    return (
-        <div
-            className="border rounded-lg overflow-hidden"
-            style={{
-                borderColor: filter.isEnabled ? colors.cardBorder : colors.muted,
-                opacity: filter.isEnabled ? 1 : 0.6
-            }}
-        >
-            <div className="px-3 py-2 flex items-center justify-between" style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : '#f9fafb' }}>
-                <div className="flex items-center gap-2 flex-1">
-                    <input
-                        type="checkbox"
-                        checked={filter.isEnabled}
-                        onChange={(e) => onUpdate({ isEnabled: e.target.checked })}
-                        className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
-                    />
-                    <button
-                        onClick={() => setIsExpanded(!isExpanded)}
-                        className="flex items-center gap-1 text-sm font-medium"
-                        style={{ color: colors.text }}
-                    >
-                        {isExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-                        {filter.field}
-                    </button>
-                </div>
-                <button
-                    onClick={onRemove}
-                    className="p-1 hover:text-red-600 transition-colors"
-                    style={{ color: colors.muted }}
-                >
-                    <X className="w-4 h-4" />
-                </button>
-            </div>
-
-            {isExpanded && (
-                <div className="p-3 border-t space-y-2" style={{ borderColor: colors.cardBorder }}>
-                    <div className="relative">
-                        <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3" style={{ color: colors.muted }} />
-                        <input
-                            type="text"
-                            value={searchValue}
-                            onChange={(e) => setSearchValue(e.target.value)}
-                            placeholder="Search values..."
-                            className="w-full pl-7 pr-2 py-1.5 text-xs border rounded focus:ring-1 focus:ring-indigo-500 outline-none"
-                            style={{ backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.text }}
-                        />
-                    </div>
-
-                    <div className="max-h-40 overflow-y-auto space-y-1">
-                        {filteredValues.map(value => (
-                            <label
-                                key={value}
-                                className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
-                            >
-                                <input
-                                    type="checkbox"
-                                    checked={filter.values?.includes(value) || false}
-                                    onChange={() => toggleValue(value)}
-                                    className="w-3 h-3 text-indigo-600 rounded focus:ring-indigo-500"
-                                />
-                                <span className="text-xs" style={{ color: colors.text }}>{value}</span>
-                            </label>
-                        ))}
-                    </div>
-
-                    {filter.values && filter.values.length > 0 && (
-                        <div className="pt-2 border-t" style={{ borderColor: colors.cardBorder }}>
-                            <span className="text-xs" style={{ color: colors.muted }}>
-                                {filter.values.length} selected
-                            </span>
-                        </div>
-                    )}
-                </div>
-            )}
-        </div>
-    );
-}

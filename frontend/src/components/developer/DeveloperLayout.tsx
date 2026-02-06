@@ -37,24 +37,29 @@ export default function DeveloperLayout({ user, onLogout, children }: DeveloperL
     { to: '/developer/api-config', icon: Settings, label: 'API Configuration' }
   ];
 
-  // Theme colors - Indigo accent for Developer
+  // Theme colors - Developer: indigo-purple (matches landing)
   const colors = {
     bg: isDark ? '#0f0f1a' : '#f1f5f9',
-    sidebar: isDark ? 'rgba(26, 26, 46, 0.95)' : '#ffffff',
-    sidebarBorder: isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0',
-    header: isDark ? 'rgba(26, 26, 46, 0.95)' : '#ffffff',
+    sidebar: isDark ? 'rgba(26, 26, 46, 0.92)' : 'rgba(255,255,255,0.98)',
+    sidebarBorder: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
+    header: isDark ? 'rgba(26, 26, 46, 0.92)' : 'rgba(255,255,255,0.98)',
     text: isDark ? '#f1f5f9' : '#1e293b',
     textMuted: isDark ? '#94a3b8' : '#64748b',
     textSecondary: isDark ? '#cbd5e1' : '#475569',
-    accent: '#6366f1',
-    accentBg: isDark ? 'rgba(99, 102, 241, 0.15)' : '#eef2ff',
-    accentHover: isDark ? 'rgba(99, 102, 241, 0.25)' : '#e0e7ff',
-    accentText: isDark ? '#a5b4fc' : '#4f46e5',
+    accent: '#ef4444',
+    logoGradient: 'linear-gradient(135deg, #ef4444, #f97316)',
+    logoShadow: '0 4px 15px rgba(239, 68, 68, 0.35)',
+    accentBg: isDark ? 'rgba(239, 68, 68, 0.15)' : '#fef2f2',
+    accentHover: isDark ? 'rgba(239, 68, 68, 0.25)' : '#fee2e2',
+    accentText: isDark ? '#fca5a5' : '#dc2626',
     navHover: isDark ? 'rgba(255,255,255,0.05)' : '#f8fafc',
-    navActive: isDark ? 'rgba(99, 102, 241, 0.15)' : '#eef2ff',
-    cardBg: isDark ? 'rgba(255,255,255,0.03)' : '#ffffff',
-    cardBorder: isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0',
-    cardShadow: isDark ? '0 4px 20px rgba(0,0,0,0.3)' : '0 4px 20px rgba(0,0,0,0.05)',
+    navActive: isDark ? 'rgba(239, 68, 68, 0.15)' : '#fef2f2',
+    cardBg: isDark ? 'rgba(255,255,255,0.05)' : '#ffffff',
+    cardBorder: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
+    cardShadow: isDark ? '0 8px 32px rgba(0,0,0,0.3)' : '0 8px 32px rgba(0,0,0,0.08)',
+    orb1: isDark ? 'rgba(239, 68, 68, 0.2)' : 'rgba(239, 68, 68, 0.12)',
+    orb2: isDark ? 'rgba(249, 115, 22, 0.18)' : 'rgba(249, 115, 22, 0.1)',
+    gridColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.04)',
   };
 
   return (
@@ -62,9 +67,29 @@ export default function DeveloperLayout({ user, onLogout, children }: DeveloperL
       minHeight: '100vh',
       background: isDark
         ? 'linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%)'
-        : colors.bg,
+        : 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #f1f5f9 100%)',
       display: 'flex',
+      position: 'relative',
+      overflow: 'hidden',
     }}>
+      {/* Animated background (Landing style) */}
+      <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', overflow: 'hidden', zIndex: 0 }}>
+        <div style={{
+          position: 'absolute', top: '-10%', right: '-5%', width: '400px', height: '400px',
+          background: `radial-gradient(circle, ${colors.orb1} 0%, transparent 70%)`, borderRadius: '50%',
+          filter: 'blur(60px)', animation: 'portal-float 8s ease-in-out infinite',
+        }} />
+        <div style={{
+          position: 'absolute', bottom: '-15%', left: '-10%', width: '500px', height: '500px',
+          background: `radial-gradient(circle, ${colors.orb2} 0%, transparent 70%)`, borderRadius: '50%',
+          filter: 'blur(80px)', animation: 'portal-float 10s ease-in-out infinite reverse',
+        }} />
+        <div style={{
+          position: 'absolute', inset: 0,
+          backgroundImage: `linear-gradient(${colors.gridColor} 1px, transparent 1px), linear-gradient(90deg, ${colors.gridColor} 1px, transparent 1px)`,
+          backgroundSize: '50px 50px',
+        }} />
+      </div>
       {/* Mobile Overlay */}
       {sidebarOpen && (
         <div
@@ -80,15 +105,16 @@ export default function DeveloperLayout({ user, onLogout, children }: DeveloperL
 
       {/* Sidebar */}
       <aside style={{
-        position: sidebarOpen ? 'fixed' : undefined,
+        position: sidebarOpen ? 'fixed' : 'relative',
         inset: sidebarOpen ? '0 auto 0 0' : undefined,
         width: '260px',
         background: colors.sidebar,
         borderRight: `1px solid ${colors.sidebarBorder}`,
-        backdropFilter: isDark ? 'blur(20px)' : undefined,
+        backdropFilter: 'blur(20px)',
         zIndex: 30,
+        boxShadow: isDark ? '4px 0 24px rgba(0,0,0,0.2)' : '4px 0 24px rgba(0,0,0,0.06)',
         transform: sidebarOpen ? 'translateX(0)' : undefined,
-        transition: 'transform 0.3s ease',
+        transition: 'transform 0.35s cubic-bezier(0.33, 1, 0.68, 1)',
         display: 'flex',
         flexDirection: 'column',
         height: '100vh',
@@ -105,11 +131,12 @@ export default function DeveloperLayout({ user, onLogout, children }: DeveloperL
         }}>
           <div style={{ display: 'flex', alignItems: 'center' }}>
             <div style={{
-              background: colors.accentBg,
+              background: colors.logoGradient,
               padding: '10px',
               borderRadius: '12px',
+              boxShadow: colors.logoShadow,
             }}>
-              <Code style={{ width: '24px', height: '24px', color: colors.accent }} />
+              <Code style={{ width: '24px', height: '24px', color: 'white' }} />
             </div>
             <span style={{
               marginLeft: '12px',
@@ -156,7 +183,7 @@ export default function DeveloperLayout({ user, onLogout, children }: DeveloperL
                 padding: '12px 16px',
                 borderRadius: '10px',
                 textDecoration: 'none',
-                transition: 'all 0.2s ease',
+                transition: 'all 0.25s cubic-bezier(0.33, 1, 0.68, 1)',
                 background: isActive ? colors.accentBg : 'transparent',
                 color: isActive ? colors.accent : colors.textMuted,
                 fontWeight: isActive ? 500 : 400,
@@ -226,10 +253,10 @@ export default function DeveloperLayout({ user, onLogout, children }: DeveloperL
               fontSize: '14px',
               color: colors.accent,
               background: 'transparent',
-              border: `1px solid ${isDark ? 'rgba(99, 102, 241, 0.3)' : '#c7d2fe'}`,
+              border: `1px solid ${isDark ? 'rgba(239, 68, 68, 0.3)' : '#fecaca'}`,
               borderRadius: '10px',
               cursor: 'pointer',
-              transition: 'all 0.2s ease',
+              transition: 'all 0.25s cubic-bezier(0.33, 1, 0.68, 1)',
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.background = colors.accentBg;
@@ -245,7 +272,7 @@ export default function DeveloperLayout({ user, onLogout, children }: DeveloperL
       </aside>
 
       {/* Main Content */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, position: 'relative', zIndex: 1 }}>
         {/* Top Bar */}
         <header style={{
           height: '64px',
@@ -297,11 +324,11 @@ export default function DeveloperLayout({ user, onLogout, children }: DeveloperL
         </header>
 
         {/* Page Content */}
-        <main style={{
+        <main className="animate-fade-in" style={{
           flex: 1,
           overflowY: 'auto',
           padding: '24px',
-          background: isDark ? 'transparent' : colors.bg,
+          background: 'transparent',
         }}>
           {children}
         </main>

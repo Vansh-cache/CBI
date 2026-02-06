@@ -1,7 +1,7 @@
 {
   "name": "bi-platform-backend",
   "version": "1.0.0",
-  "description": "Backend API for Enterprise BI Platform",
+  "description": "Backend API for Cache BI Platform",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

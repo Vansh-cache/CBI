@@ -133,7 +133,7 @@ export function widgetFieldToRole(
  */
 export function validateChartConfig(
   chartType: string,
-  config: { xAxis?: string; yAxis?: string; legend?: string; field?: string; filterField?: string }
+  config: { xAxis?: string; yAxis?: string; legend?: string; field?: string; filterField?: string; measures?: string[]; dimensions?: string[] }
 ): string[] {
   const meta = getChartMeta(chartType);
   if (!meta) return [`Unknown chart type: ${chartType}`];
@@ -144,9 +144,11 @@ export function validateChartConfig(
   const hasCategory = !!(config.xAxis || config.legend);
   const hasField = !!config.field;
   const hasFilter = !!config.filterField;
+  const hasMeasures = !!(config.measures?.length);
+  const hasDimensions = !!(config.dimensions?.length || config.yAxis || config.legend);
 
-  if (meta.requiredFields.includes('axis') && !hasAxis) errors.push('Axis (X-axis or Legend) is required.');
-  if (meta.requiredFields.includes('values') && !hasValues) errors.push('Values (Y-axis or Field) is required.');
+  if (meta.requiredFields.includes('axis') && !hasAxis && !hasMeasures) errors.push('Axis (X-axis or Legend) or Analyze (measures) is required.');
+  if (meta.requiredFields.includes('values') && !hasValues && !hasDimensions) errors.push('Values (Y-axis or Field) or Explain by (dimensions) is required.');
   if (meta.requiredFields.includes('category') && !hasCategory) errors.push('Category (X-axis or Legend) is required.');
   if (meta.requiredFields.includes('field') && !hasField) errors.push('Field is required.');
   if (meta.requiredFields.includes('filter') && !hasFilter) errors.push('Filter field is required.');

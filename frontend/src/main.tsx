@@ -3,11 +3,14 @@ import App from "./App.tsx";
 import "./index.css";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { CrossFilterProvider } from "./contexts/CrossFilterContext";
 
 createRoot(document.getElementById("root")!).render(
   <ThemeProvider>
     <AuthProvider>
-      <App />
+      <CrossFilterProvider>
+        <App />
+      </CrossFilterProvider>
     </AuthProvider>
   </ThemeProvider>
 );

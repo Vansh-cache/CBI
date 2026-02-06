@@ -12,18 +12,45 @@ export interface Widget {
   dataKey?: string;
   position: { x: number; y: number };
   size: { width: number; height: number };
-  aggregation?: 'count' | 'sum' | 'first' | 'last' | 'percentage';
+
+  // Legacy fields (for backward compatibility)
+  aggregation?: 'count' | 'sum' | 'first' | 'last' | 'percentage' | 'avg' | 'min' | 'max';
   field?: string;
   xAxis?: string;
   yAxis?: string;
   legend?: string;
   filterField?: string;
   selectedFilters?: string[];
+
+  // Power BI-style enhancements
+  measures?: string[]; // Array of measure IDs
+  dimensions?: string[]; // Array of dimension field names
+  drillPathId?: string; // ID of drill path for this widget
+  interactionMode?: 'filter' | 'highlight' | 'none'; // How this widget affects others
+  allowDrillDown?: boolean; // Enable drill-down on this widget
+  allowDrillThrough?: boolean; // Enable drill-through on this widget
+  drillThroughTarget?: string; // Target widget ID for drill-through
+
+  // Data source
   datasetId?: number;
+
+  // Styling
   accentColor?: string;
+  valueFormat?: string;
+  showDataLabels?: boolean;
+  showLegend?: boolean;
+  showGridLines?: boolean;
+
+  // Locked state (from alignment tools)
+  locked?: boolean;
 }
 
-export type RenderWidgetOptions = { mode?: 'light' | 'dark' };
+export type RenderWidgetOptions = {
+  mode?: 'light' | 'dark';
+  onSlicerChange?: (value: string, selected: boolean) => void;
+  onDataPointClick?: (field: string, value: unknown) => void;
+  animations?: boolean;
+};
 
 /** For card/KPI value from raw data. Used by builder and elsewhere. */
 export function getCardValue(widget: Widget, data: unknown[]): string {
@@ -34,6 +61,18 @@ export function getCardValue(widget: Widget, data: unknown[]): string {
       return data.length.toString();
     case 'sum':
       return (data as any[]).reduce((acc, item) => acc + (Number(item[widget.field!]) || 0), 0).toLocaleString();
+    case 'avg': {
+      const sum = (data as any[]).reduce((acc, item) => acc + (Number(item[widget.field!]) || 0), 0);
+      return (sum / data.length).toLocaleString(undefined, { maximumFractionDigits: 2 });
+    }
+    case 'min': {
+      const values = (data as any[]).map(item => Number(item[widget.field!])).filter(v => !isNaN(v));
+      return values.length > 0 ? Math.min(...values).toLocaleString() : '0';
+    }
+    case 'max': {
+      const values = (data as any[]).map(item => Number(item[widget.field!])).filter(v => !isNaN(v));
+      return values.length > 0 ? Math.max(...values).toLocaleString() : '0';
+    }
     case 'first':
       return String((data[0] as any)?.[widget.field!] ?? '0');
     case 'last':
@@ -67,6 +106,13 @@ export function renderWidget(
     selectedFilters: widget.selectedFilters,
     datasetId: widget.datasetId,
     accentColor: widget.accentColor,
+    valueFormat: widget.valueFormat,
+    dimensions: widget.dimensions,
+    measures: widget.measures,
+    xAxisAggregation: (widget as any).xAxisAggregation,
+    yAxisAggregation: (widget as any).yAxisAggregation,
+    legendAggregation: (widget as any).legendAggregation,
+    fieldAggregation: (widget as any).fieldAggregation,
   };
   return ChartRenderer(config, widgetData, options);
 }

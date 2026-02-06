@@ -199,7 +199,7 @@ export default function AuditLogs() {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
               <p style={{ fontSize: '0.875rem', color: colors.muted, marginBottom: '0.25rem' }}>Successful</p>
-              <p style={{ fontSize: '1.5rem', fontWeight: 700, color: '#22c55e' }}>{successCount}</p>
+              <p style={{ fontSize: '1.5rem', fontWeight: 700, color: '#ef4444' }}>{successCount}</p>
             </div>
             <CheckCircle style={{ width: '2rem', height: '2rem', color: '#4ade80' }} />
           </div>
@@ -277,7 +277,7 @@ export default function AuditLogs() {
                       <td style={{ padding: '1rem 1.5rem' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                           {status === 'success' ? (
-                            <CheckCircle style={{ width: '1.25rem', height: '1.25rem', color: '#22c55e' }} />
+                            <CheckCircle style={{ width: '1.25rem', height: '1.25rem', color: '#ef4444' }} />
                           ) : (
                             <XCircle style={{ width: '1.25rem', height: '1.25rem', color: '#ef4444' }} />
                           )}

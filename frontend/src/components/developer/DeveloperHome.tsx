@@ -78,18 +78,19 @@ export default function DeveloperHome() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div className="animate-fade-in-down" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
           <h2 style={{ fontSize: '1.5rem', fontWeight: 600, color: colors.text, marginBottom: '0.25rem' }}>My Dashboards</h2>
           <p style={{ color: colors.muted }}>Create and manage your dashboards</p>
         </div>
         <button
           onClick={() => navigate('/developer/builder')}
+          className="hover-scale transition-smooth"
           style={{
             display: 'flex',
             alignItems: 'center',
             padding: '0.5rem 1rem',
-            backgroundColor: '#6366f1',
+            backgroundColor: '#ef4444',
             color: 'white',
             borderRadius: '0.5rem',
             border: 'none',
@@ -113,13 +114,18 @@ export default function DeveloperHome() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div style={{
-          backgroundColor: colors.cardBg,
-          borderRadius: '0.75rem',
-          padding: '1.5rem',
-          boxShadow: colors.cardShadow,
-          border: `1px solid ${colors.cardBorder}`
-        }}>
+        <div
+          className="hover-lift animate-fade-in-up"
+          style={{
+            backgroundColor: colors.cardBg,
+            borderRadius: '0.75rem',
+            padding: '1.5rem',
+            boxShadow: colors.cardShadow,
+            border: `1px solid ${colors.cardBorder}`,
+            animationDelay: '80ms',
+            opacity: 0
+          }}
+        >
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
               <p style={{ fontSize: '0.875rem', color: colors.muted, marginBottom: '0.25rem' }}>Total Dashboards</p>
@@ -130,13 +136,18 @@ export default function DeveloperHome() {
             <BarChart3 className="w-8 h-8" style={{ color: palette.purple }} />
           </div>
         </div>
-        <div style={{
-          backgroundColor: colors.cardBg,
-          borderRadius: '0.75rem',
-          padding: '1.5rem',
-          boxShadow: colors.cardShadow,
-          border: `1px solid ${colors.cardBorder}`
-        }}>
+        <div
+          className="hover-lift animate-fade-in-up"
+          style={{
+            backgroundColor: colors.cardBg,
+            borderRadius: '0.75rem',
+            padding: '1.5rem',
+            boxShadow: colors.cardShadow,
+            border: `1px solid ${colors.cardBorder}`,
+            animationDelay: '160ms',
+            opacity: 0
+          }}
+        >
           <div>
             <p style={{ fontSize: '0.875rem', color: colors.muted, marginBottom: '0.25rem' }}>Active</p>
             <p style={{ fontSize: '1.875rem', fontWeight: 700, color: palette.green }}>
@@ -144,13 +155,18 @@ export default function DeveloperHome() {
             </p>
           </div>
         </div>
-        <div style={{
-          backgroundColor: colors.cardBg,
-          borderRadius: '0.75rem',
-          padding: '1.5rem',
-          boxShadow: colors.cardShadow,
-          border: `1px solid ${colors.cardBorder}`
-        }}>
+        <div
+          className="hover-lift animate-fade-in-up"
+          style={{
+            backgroundColor: colors.cardBg,
+            borderRadius: '0.75rem',
+            padding: '1.5rem',
+            boxShadow: colors.cardShadow,
+            border: `1px solid ${colors.cardBorder}`,
+            animationDelay: '240ms',
+            opacity: 0
+          }}
+        >
           <div>
             <p style={{ fontSize: '0.875rem', color: colors.muted, marginBottom: '0.25rem' }}>Total Widgets</p>
             <p style={{ fontSize: '1.875rem', fontWeight: 700, color: palette.blue }}>
@@ -158,13 +174,18 @@ export default function DeveloperHome() {
             </p>
           </div>
         </div>
-        <div style={{
-          backgroundColor: colors.cardBg,
-          borderRadius: '0.75rem',
-          padding: '1.5rem',
-          boxShadow: colors.cardShadow,
-          border: `1px solid ${colors.cardBorder}`
-        }}>
+        <div
+          className="hover-lift animate-fade-in-up"
+          style={{
+            backgroundColor: colors.cardBg,
+            borderRadius: '0.75rem',
+            padding: '1.5rem',
+            boxShadow: colors.cardShadow,
+            border: `1px solid ${colors.cardBorder}`,
+            animationDelay: '320ms',
+            opacity: 0
+          }}
+        >
           <div>
             <p style={{ fontSize: '0.875rem', color: colors.muted, marginBottom: '0.25rem' }}>Assignments</p>
             <p style={{ fontSize: '1.875rem', fontWeight: 700, color: palette.purple }}>
@@ -182,15 +203,18 @@ export default function DeveloperHome() {
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {dashboards.map((d) => (
+          {dashboards.map((d, i) => (
             <div
               key={d.id}
+              className="hover-lift animate-fade-in-up"
               style={{
                 backgroundColor: colors.cardBg,
                 borderRadius: '0.75rem',
                 boxShadow: colors.cardShadow,
                 border: `1px solid ${colors.cardBorder}`,
-                overflow: 'hidden'
+                overflow: 'hidden',
+                animationDelay: `${i * 60}ms`,
+                opacity: 0
               }}
             >
               <div style={{ padding: '1.5rem' }}>
@@ -285,7 +309,7 @@ export default function DeveloperHome() {
             onClick={() => navigate('/developer/builder')}
             style={{
               padding: '0.5rem 1rem',
-              backgroundColor: '#6366f1',
+              backgroundColor: '#ef4444',
               color: 'white',
               borderRadius: '0.5rem',
               border: 'none',

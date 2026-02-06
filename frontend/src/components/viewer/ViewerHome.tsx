@@ -97,7 +97,7 @@ export default function ViewerHome() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1.5rem' }}>
+      <div className="animate-fade-in-down" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1.5rem' }}>
         <div style={{ flexShrink: 0 }}>
           <h1 style={{ fontSize: '1.875rem', fontWeight: 700, color: colors.text, marginBottom: '0.5rem' }}>My Dashboards</h1>
           <p style={{ color: colors.muted }}>Access your assigned analytics dashboards</p>
@@ -140,13 +140,18 @@ export default function ViewerHome() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div style={{
-          backgroundColor: colors.cardBg,
-          borderRadius: '0.75rem',
-          padding: '1.5rem',
-          boxShadow: colors.cardShadow,
-          border: `1px solid ${colors.cardBorder}`
-        }}>
+        <div
+          className="hover-lift animate-fade-in-up"
+          style={{
+            backgroundColor: colors.cardBg,
+            borderRadius: '0.75rem',
+            padding: '1.5rem',
+            boxShadow: colors.cardShadow,
+            border: `1px solid ${colors.cardBorder}`,
+            animationDelay: '80ms',
+            opacity: 0
+          }}
+        >
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
               <p style={{ fontSize: '0.875rem', color: colors.muted, marginBottom: '0.25rem' }}>Available Dashboards</p>
@@ -154,16 +159,21 @@ export default function ViewerHome() {
                 {loading ? '—' : dashboards.length}
               </p>
             </div>
-            <BarChart3 className="w-12 h-12" style={{ color: palette.green }} />
+            <BarChart3 className="w-12 h-12" style={{ color: palette.red }} />
           </div>
         </div>
-        <div style={{
-          backgroundColor: colors.cardBg,
-          borderRadius: '0.75rem',
-          padding: '1.5rem',
-          boxShadow: colors.cardShadow,
-          border: `1px solid ${colors.cardBorder}`
-        }}>
+        <div
+          className="hover-lift animate-fade-in-up"
+          style={{
+            backgroundColor: colors.cardBg,
+            borderRadius: '0.75rem',
+            padding: '1.5rem',
+            boxShadow: colors.cardShadow,
+            border: `1px solid ${colors.cardBorder}`,
+            animationDelay: '160ms',
+            opacity: 0
+          }}
+        >
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
               <p style={{ fontSize: '0.875rem', color: colors.muted, marginBottom: '0.25rem' }}>Favorites</p>
@@ -172,13 +182,18 @@ export default function ViewerHome() {
             <Star className="w-12 h-12" style={{ color: palette.orange }} />
           </div>
         </div>
-        <div style={{
-          backgroundColor: colors.cardBg,
-          borderRadius: '0.75rem',
-          padding: '1.5rem',
-          boxShadow: colors.cardShadow,
-          border: `1px solid ${colors.cardBorder}`
-        }}>
+        <div
+          className="hover-lift animate-fade-in-up"
+          style={{
+            backgroundColor: colors.cardBg,
+            borderRadius: '0.75rem',
+            padding: '1.5rem',
+            boxShadow: colors.cardShadow,
+            border: `1px solid ${colors.cardBorder}`,
+            animationDelay: '240ms',
+            opacity: 0
+          }}
+        >
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
               <p style={{ fontSize: '0.875rem', color: colors.muted, marginBottom: '0.25rem' }}>Recently Viewed</p>
@@ -191,19 +206,20 @@ export default function ViewerHome() {
 
       {loading ? (
         <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem 0' }}>
-          <Loader2 className="w-10 h-10 animate-spin" style={{ color: palette.green }} />
+          <Loader2 className="w-10 h-10 animate-spin" style={{ color: palette.red }} />
         </div>
       ) : (
         <>
           <div>
             <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: colors.text, marginBottom: '1rem' }}>Your Dashboards</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {sortedDashboards.map((d) => {
+              {sortedDashboards.map((d, index) => {
                 const isFavorite = favorites.includes(String(d.id));
                 return (
                   <div
                     key={d.id}
                     onClick={() => navigate(`/viewer/view/${d.id}`)}
+                    className="hover-lift animate-fade-in-up group"
                     style={{
                       backgroundColor: colors.cardBg,
                       borderRadius: '0.75rem',
@@ -211,9 +227,10 @@ export default function ViewerHome() {
                       border: `1px solid ${colors.cardBorder}`,
                       overflow: 'hidden',
                       cursor: 'pointer',
-                      position: 'relative'
+                      position: 'relative',
+                      animationDelay: `${Math.min(index, 8) * 50}ms`,
+                      opacity: 0
                     }}
-                    className="group"
                   >
                     <button
                       onClick={(e) => toggleFavorite(String(d.id), e)}
@@ -237,17 +254,17 @@ export default function ViewerHome() {
                     <div style={{
                       height: '10rem',
                       background: isDark
-                        ? 'linear-gradient(to bottom right, #1a3a2a, #1a2a3a)'
-                        : 'linear-gradient(to bottom right, #ecfdf5, #eff6ff)',
+                        ? 'linear-gradient(to bottom right, #2a1a1a, #1a1a2a)'
+                        : 'linear-gradient(to bottom right, #fef2f2, #fff7ed)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       borderBottom: `1px solid ${colors.cardBorder}`
                     }}>
-                      <BarChart3 className="w-16 h-16 group-hover:opacity-100 transition-opacity" style={{ color: palette.green, opacity: 0.5 }} />
+                      <BarChart3 className="w-16 h-16 group-hover:opacity-100 transition-opacity" style={{ color: palette.red, opacity: 0.5 }} />
                     </div>
                     <div style={{ padding: '1.5rem' }}>
-                      <h3 style={{ fontSize: '1.125rem', fontWeight: 600, color: colors.text, marginBottom: '0.5rem' }} className="group-hover:text-green-600 transition-colors">
+                      <h3 style={{ fontSize: '1.125rem', fontWeight: 600, color: colors.text, marginBottom: '0.5rem' }} className="group-hover:text-red-600 transition-colors">
                         {d.name}
                       </h3>
                       <p style={{ fontSize: '0.875rem', color: colors.muted, marginBottom: '1rem' }} className="line-clamp-2">
@@ -274,13 +291,14 @@ export default function ViewerHome() {
                             e.stopPropagation();
                             navigate(`/viewer/view/${d.id}`);
                           }}
+                          className="transition-smooth hover-scale"
                           style={{
                             width: '100%',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
                             padding: '0.5rem 1rem',
-                            backgroundColor: '#16a34a',
+                            backgroundColor: '#ef4444',
                             color: 'white',
                             borderRadius: '0.5rem',
                             border: 'none',
@@ -322,7 +340,7 @@ export default function ViewerHome() {
       <div>
         <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: colors.text, marginBottom: '1rem' }}>Quick Tips</h2>
         <div style={{
-          background: 'linear-gradient(to right, #22c55e, #10b981)',
+          background: 'linear-gradient(to right, #ef4444, #f97316)',
           borderRadius: '0.75rem',
           padding: '1.5rem',
           boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
@@ -336,11 +354,11 @@ export default function ViewerHome() {
               <h3 style={{ fontWeight: 600, marginBottom: '0.5rem', fontSize: '1.125rem' }}>
                 Star Your Favorite Dashboards
               </h3>
-              <p style={{ color: 'rgba(236,253,245,1)', marginBottom: '0.75rem' }}>
+              <p style={{ color: 'rgba(255,255,255,0.9)', marginBottom: '0.75rem' }}>
                 Click the star icon on any dashboard card to mark it as a favorite.
                 Your starred dashboards appear at the top for quick access.
               </p>
-              <ul style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', color: 'rgba(236,253,245,1)' }}>
+              <ul style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', color: 'rgba(255,255,255,0.9)' }}>
                 <li style={{ display: 'flex', alignItems: 'center' }}>
                   <span style={{ marginRight: '0.5rem' }}>•</span>
                   <span>Use the search bar to find specific dashboards</span>

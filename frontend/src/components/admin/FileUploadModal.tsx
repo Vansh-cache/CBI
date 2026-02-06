@@ -141,7 +141,7 @@ export default function FileUploadModal({ isOpen, onClose, onSave, onUpload }: F
             >
               <Upload style={{ width: '3rem', height: '3rem', color: colors.muted, margin: '0 auto 0.75rem' }} />
               <label style={{ cursor: 'pointer' }}>
-                <span style={{ fontSize: '0.875rem', color: '#22c55e', fontWeight: 500 }}>
+                <span style={{ fontSize: '0.875rem', color: '#ef4444', fontWeight: 500 }}>
                   Click to upload
                 </span>
                 <span style={{ fontSize: '0.875rem', color: colors.muted }}> or drag and drop</span>
@@ -158,12 +158,12 @@ export default function FileUploadModal({ isOpen, onClose, onSave, onUpload }: F
             </div>
             {selectedFile && (
               <div style={{ marginTop: '0.75rem', display: 'flex', alignItems: 'center', fontSize: '0.875rem', color: colors.text, backgroundColor: palette.gray.bg, padding: '0.75rem 1rem', borderRadius: '0.5rem' }}>
-                <FileSpreadsheet style={{ width: '1.25rem', height: '1.25rem', color: '#22c55e', marginRight: '0.5rem', flexShrink: 0 }} />
+                <FileSpreadsheet style={{ width: '1.25rem', height: '1.25rem', color: '#ef4444', marginRight: '0.5rem', flexShrink: 0 }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selectedFile.name}</p>
                   <p style={{ color: colors.muted }}>{(selectedFile.size / 1024).toFixed(2)} KB</p>
                 </div>
-                <CheckCircle style={{ width: '1.25rem', height: '1.25rem', color: '#22c55e', marginLeft: '0.5rem', flexShrink: 0 }} />
+                <CheckCircle style={{ width: '1.25rem', height: '1.25rem', color: '#ef4444', marginLeft: '0.5rem', flexShrink: 0 }} />
               </div>
             )}
           </div>
@@ -210,7 +210,7 @@ export default function FileUploadModal({ isOpen, onClose, onSave, onUpload }: F
           <button
             onClick={handleUpload}
             disabled={!selectedFile || !dataSourceName.trim() || uploadStatus === 'loading'}
-            style={{ padding: '0.5rem 1rem', backgroundColor: '#22c55e', color: 'white', borderRadius: '0.5rem', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', opacity: (!selectedFile || !dataSourceName.trim() || uploadStatus === 'loading') ? 0.5 : 1, transition: 'background-color 0.2s' }}
+            style={{ padding: '0.5rem 1rem', backgroundColor: '#ef4444', color: 'white', borderRadius: '0.5rem', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', opacity: (!selectedFile || !dataSourceName.trim() || uploadStatus === 'loading') ? 0.5 : 1, transition: 'background-color 0.2s' }}
           >
             {uploadStatus === 'loading' ? (
               <span>Uploading...</span>

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { X, UserPlus, Search, CheckCircle, Loader2 } from 'lucide-react';
 import { apiGet, apiPost } from '../../lib/api';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -130,7 +130,7 @@ export default function UserAssignmentModal({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-[99999]" style={{ zIndex: 99999 }}>
-      <div style={{ backgroundColor: colors.modalBg, borderColor: colors.cardBorder }} className="rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col relative border" style={{ zIndex: 100000, backgroundColor: colors.modalBg }}>
+      <div style={{ backgroundColor: colors.modalBg, borderColor: colors.cardBorder, zIndex: 100000 }} className="rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col relative border">
         <div style={{ borderColor: colors.cardBorder }} className="flex items-center justify-between p-6 border-b">
           <div>
             <h2 style={{ color: colors.text }} className="text-xl font-semibold">Publish Dashboard</h2>
@@ -243,7 +243,7 @@ export default function UserAssignmentModal({
                     onClick={() => toggleUserSelection(user.id)}
                     style={{
                       backgroundColor: isSelected ? (isDark ? '#312e81' : '#eef2ff') : colors.cardBg,
-                      borderColor: isSelected ? '#6366f1' : colors.cardBorder
+                      borderColor: isSelected ? '#ef4444' : colors.cardBorder
                     }}
                     className="p-4 border rounded-lg cursor-pointer transition-colors hover:opacity-90"
                   >
@@ -251,7 +251,7 @@ export default function UserAssignmentModal({
                       <div className="flex items-center gap-3">
                         <div
                           style={{
-                            backgroundColor: isSelected ? '#4f46e5' : (isDark ? '#374151' : '#e5e7eb')
+                            backgroundColor: isSelected ? '#dc2626' : (isDark ? '#374151' : '#e5e7eb')
                           }}
                           className="w-10 h-10 rounded-full flex items-center justify-center"
                         >

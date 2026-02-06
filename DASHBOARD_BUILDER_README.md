@@ -350,7 +350,7 @@ All code is provided as-is for your project. Feel free to modify and use as need
 
 ## 🙏 Credits
 
-Created with ❤️ by AI Assistant for your Enterprise BI Visualization Platform.
+Created with ❤️ by AI Assistant for your Cache BI Visualization Platform.
 
 ---
 

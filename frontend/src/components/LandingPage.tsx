@@ -29,13 +29,13 @@ export default function LandingPage() {
     cardBg: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.95)',
     cardBorder: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
     cardShadow: isDark ? '0 8px 32px rgba(0,0,0,0.3)' : '0 8px 32px rgba(0,0,0,0.08)',
-    orbColor1: isDark ? 'rgba(99, 102, 241, 0.3)' : 'rgba(99, 102, 241, 0.2)',
-    orbColor2: isDark ? 'rgba(168, 85, 247, 0.25)' : 'rgba(168, 85, 247, 0.15)',
-    orbColor3: isDark ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.15)',
+    orbColor1: isDark ? 'rgba(239, 68, 68, 0.3)' : 'rgba(239, 68, 68, 0.2)',
+    orbColor2: isDark ? 'rgba(249, 115, 22, 0.25)' : 'rgba(249, 115, 22, 0.15)',
+    orbColor3: isDark ? 'rgba(239, 68, 68, 0.2)' : 'rgba(239, 68, 68, 0.15)',
     gridColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)',
-    badgeBg: isDark ? 'rgba(99, 102, 241, 0.15)' : 'rgba(99, 102, 241, 0.1)',
-    badgeBorder: isDark ? 'rgba(99, 102, 241, 0.3)' : 'rgba(99, 102, 241, 0.3)',
-    badgeText: isDark ? '#a5b4fc' : '#6366f1',
+    badgeBg: isDark ? 'rgba(239, 68, 68, 0.15)' : 'rgba(239, 68, 68, 0.1)',
+    badgeBorder: isDark ? 'rgba(239, 68, 68, 0.3)' : 'rgba(239, 68, 68, 0.3)',
+    badgeText: isDark ? '#fca5a5' : '#ef4444',
   };
 
   return (
@@ -110,8 +110,8 @@ export default function LandingPage() {
           to { opacity: 1; }
         }
         @keyframes glow {
-          0%, 100% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.5); }
-          50% { box-shadow: 0 0 40px rgba(99, 102, 241, 0.8), 0 0 60px rgba(168, 85, 247, 0.4); }
+          0%, 100% { box-shadow: 0 0 20px rgba(239, 68, 68, 0.5); }
+          50% { box-shadow: 0 0 40px rgba(239, 68, 68, 0.8), 0 0 60px rgba(249, 115, 22, 0.4); }
         }
         @keyframes bounce {
           0%, 100% { transform: translateY(0); }
@@ -123,7 +123,7 @@ export default function LandingPage() {
           box-shadow: 0 20px 40px rgba(0,0,0,0.3);
         }
         .hover-glow:hover {
-          box-shadow: 0 0 30px rgba(99, 102, 241, 0.4);
+          box-shadow: 0 0 30px rgba(239, 68, 68, 0.4);
         }
         .card-shine {
           position: relative;
@@ -155,20 +155,20 @@ export default function LandingPage() {
         background: scrollY > 50 ? colors.navBg : 'transparent',
         backdropFilter: scrollY > 50 ? 'blur(20px)' : 'none',
         borderBottom: scrollY > 50 ? `1px solid ${colors.navBorder}` : 'none',
-        transition: 'all 0.3s ease',
+        transition: 'all 0.35s cubic-bezier(0.33, 1, 0.68, 1)',
       }}>
         <div style={{ maxWidth: '1280px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', animation: 'slideIn 0.6s ease-out' }}>
             <div style={{
-              background: 'linear-gradient(135deg, #6366f1, #a855f7)',
+              background: 'linear-gradient(135deg, #ef4444, #f97316)',
               padding: '10px',
               borderRadius: '12px',
-              boxShadow: '0 4px 15px rgba(99, 102, 241, 0.4)',
+              boxShadow: '0 4px 15px rgba(239, 68, 68, 0.4)',
             }}>
               <LayoutDashboard style={{ width: '24px', height: '24px', color: 'white' }} />
             </div>
             <span style={{ fontSize: '1.5rem', fontWeight: 700, color: colors.text, letterSpacing: '-0.5px' }}>
-              Enterprise BI
+              Cache BI
             </span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
@@ -177,22 +177,22 @@ export default function LandingPage() {
               to="/login"
               style={{
                 padding: '12px 28px',
-                background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                background: 'linear-gradient(135deg, #ef4444, #f97316)',
                 color: 'white',
                 borderRadius: '50px',
                 fontWeight: 600,
                 textDecoration: 'none',
-                boxShadow: '0 4px 15px rgba(99, 102, 241, 0.4)',
-                transition: 'all 0.3s ease',
+                boxShadow: '0 4px 15px rgba(239, 68, 68, 0.4)',
+                transition: 'all 0.35s cubic-bezier(0.33, 1, 0.68, 1)',
                 animation: 'slideIn 0.6s ease-out 0.2s backwards',
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'scale(1.05)';
-                e.currentTarget.style.boxShadow = '0 6px 25px rgba(99, 102, 241, 0.6)';
+                e.currentTarget.style.boxShadow = '0 6px 25px rgba(239, 68, 68, 0.6)';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = 'scale(1)';
-                e.currentTarget.style.boxShadow = '0 4px 15px rgba(99, 102, 241, 0.4)';
+                e.currentTarget.style.boxShadow = '0 4px 15px rgba(239, 68, 68, 0.4)';
               }}
             >
               Sign In
@@ -236,10 +236,10 @@ export default function LandingPage() {
             lineHeight: 1.1,
             animation: isVisible ? 'slideUp 0.8s ease-out 0.1s backwards' : 'none',
           }}>
-            Enterprise Dashboard
+            Cache BI
             <br />
             <span style={{
-              background: 'linear-gradient(135deg, #6366f1, #a855f7, #ec4899)',
+              background: 'linear-gradient(135deg, #ef4444, #f97316, #dc2626)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text',
@@ -277,14 +277,14 @@ export default function LandingPage() {
                 alignItems: 'center',
                 gap: '8px',
                 padding: '18px 36px',
-                background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                background: 'linear-gradient(135deg, #ef4444, #f97316)',
                 color: 'white',
                 borderRadius: '14px',
                 fontWeight: 600,
                 fontSize: '1.1rem',
                 textDecoration: 'none',
-                boxShadow: '0 8px 30px rgba(99, 102, 241, 0.4)',
-                transition: 'all 0.3s ease',
+                boxShadow: '0 8px 30px rgba(239, 68, 68, 0.4)',
+                transition: 'all 0.35s cubic-bezier(0.33, 1, 0.68, 1)',
               }}
             >
               Get Started Free
@@ -304,7 +304,7 @@ export default function LandingPage() {
                 fontWeight: 600,
                 fontSize: '1.1rem',
                 textDecoration: 'none',
-                transition: 'all 0.3s ease',
+                transition: 'all 0.35s cubic-bezier(0.33, 1, 0.68, 1)',
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.background = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)';
@@ -329,9 +329,9 @@ export default function LandingPage() {
             animation: isVisible ? 'fadeIn 1s ease-out 0.5s backwards' : 'none',
           }}>
             {[
-              { icon: Users, label: '10K+ Users', color: '#6366f1' },
-              { icon: BarChart3, label: '1M+ Charts', color: '#a855f7' },
-              { icon: TrendingUp, label: '99.9% Uptime', color: '#ec4899' },
+              { icon: Users, label: '10K+ Users', color: '#ef4444' },
+              { icon: BarChart3, label: '1M+ Charts', color: '#f97316' },
+              { icon: TrendingUp, label: '99.9% Uptime', color: '#ef4444' },
             ].map((stat, i) => (
               <div key={i} style={{ textAlign: 'center' }}>
                 <stat.icon style={{ width: '28px', height: '28px', color: stat.color, margin: '0 auto 8px' }} />
@@ -361,9 +361,9 @@ export default function LandingPage() {
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
             {[
-              { icon: BarChart3, title: 'Interactive Charts', desc: 'Build stunning visualizations with our drag-and-drop dashboard builder', color: '#6366f1' },
-              { icon: Globe, title: 'API Integration', desc: 'Connect to any data source with our flexible API configuration', color: '#a855f7' },
-              { icon: Lock, title: 'Role-Based Access', desc: 'Secure your data with granular permissions and access controls', color: '#22c55e' },
+              { icon: BarChart3, title: 'Interactive Charts', desc: 'Build stunning visualizations with our drag-and-drop dashboard builder', color: '#ef4444' },
+              { icon: Globe, title: 'API Integration', desc: 'Connect to any data source with our flexible API configuration', color: '#f97316' },
+              { icon: Lock, title: 'Role-Based Access', desc: 'Secure your data with granular permissions and access controls', color: '#ef4444' },
               { icon: Zap, title: 'Real-time Updates', desc: 'Get instant updates with WebSocket-powered live data streaming', color: '#f59e0b' },
             ].map((feature, i) => (
               <div
@@ -374,8 +374,11 @@ export default function LandingPage() {
                   border: `1px solid ${colors.cardBorder}`,
                   borderRadius: '20px',
                   padding: '32px',
-                  transition: 'all 0.4s ease',
+                  transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                   cursor: 'pointer',
+                  animation: isVisible ? 'slideUp 0.6s ease-out forwards' : 'none',
+                  animationDelay: `${200 + i * 100}ms`,
+                  opacity: 0,
                 }}
               >
                 <div style={{
@@ -430,16 +433,16 @@ export default function LandingPage() {
                 icon: Code,
                 title: 'Developer Portal',
                 desc: 'Build and manage powerful visualizations',
-                gradient: 'linear-gradient(135deg, #6366f1, #a855f7)',
-                shadow: 'rgba(99, 102, 241, 0.3)',
+                gradient: 'linear-gradient(135deg, #ef4444, #f97316)',
+                shadow: 'rgba(239, 68, 68, 0.3)',
                 features: ['Dashboard Builder', 'Data Mapping Tools', 'API Configuration & Preview'],
               },
               {
                 icon: Eye,
                 title: 'Viewer Portal',
                 desc: 'View and interact with assigned dashboards',
-                gradient: 'linear-gradient(135deg, #22c55e, #10b981)',
-                shadow: 'rgba(34, 197, 94, 0.3)',
+                gradient: 'linear-gradient(135deg, #ef4444, #f97316)',
+                shadow: 'rgba(239, 68, 68, 0.3)',
                 features: ['Interactive Charts & Filters', 'Export to PDF/Image', 'Mobile Responsive View'],
               },
             ].map((portal, i) => (
@@ -447,11 +450,14 @@ export default function LandingPage() {
                 key={i}
                 className="hover-lift"
                 style={{
+                  animation: 'slideUp 0.6s ease-out forwards',
+                  animationDelay: `${300 + i * 120}ms`,
+                  opacity: 0,
                   background: colors.cardBg,
                   border: `1px solid ${colors.cardBorder}`,
                   borderRadius: '24px',
                   padding: '40px',
-                  transition: 'all 0.4s ease',
+                  transition: 'all 0.4s cubic-bezier(0.33, 1, 0.68, 1)',
                   position: 'relative',
                   overflow: 'hidden',
                 }}
@@ -509,14 +515,14 @@ export default function LandingPage() {
                 alignItems: 'center',
                 gap: '12px',
                 padding: '20px 48px',
-                background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                background: 'linear-gradient(135deg, #ef4444, #f97316)',
                 color: 'white',
                 borderRadius: '14px',
                 fontWeight: 600,
                 fontSize: '1.2rem',
                 textDecoration: 'none',
-                boxShadow: '0 8px 30px rgba(99, 102, 241, 0.4)',
-                transition: 'all 0.3s ease',
+                boxShadow: '0 8px 30px rgba(239, 68, 68, 0.4)',
+                transition: 'all 0.35s cubic-bezier(0.33, 1, 0.68, 1)',
               }}
             >
               Sign In to Your Portal
@@ -544,14 +550,14 @@ export default function LandingPage() {
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{
-              background: 'linear-gradient(135deg, #6366f1, #a855f7)',
+              background: 'linear-gradient(135deg, #ef4444, #f97316)',
               padding: '6px',
               borderRadius: '8px',
             }}>
               <LayoutDashboard style={{ width: '16px', height: '16px', color: 'white' }} />
             </div>
             <span style={{ color: colors.textMuted, fontSize: '14px' }}>
-              © 2026 Enterprise BI Platform. All rights reserved.
+              © 2026 Cache BI Platform. All rights reserved.
             </span>
           </div>
           <div style={{ display: 'flex', gap: '24px' }}>
@@ -559,7 +565,7 @@ export default function LandingPage() {
               <a
                 key={i}
                 href="#"
-                style={{ color: colors.textMuted, fontSize: '14px', textDecoration: 'none', transition: 'color 0.3s' }}
+                style={{ color: colors.textMuted, fontSize: '14px', textDecoration: 'none', transition: 'color 0.3s cubic-bezier(0.33, 1, 0.68, 1)' }}
                 onMouseEnter={(e) => e.currentTarget.style.color = colors.text}
                 onMouseLeave={(e) => e.currentTarget.style.color = colors.textMuted}
               >

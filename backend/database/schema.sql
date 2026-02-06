@@ -1,4 +1,4 @@
--- Enterprise BI Platform Database Schema
+-- Cache BI Platform Database Schema
 -- MySQL 8.0+
 
 CREATE DATABASE IF NOT EXISTS bi_platform;

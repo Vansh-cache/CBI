@@ -480,7 +480,7 @@ export default function DataSourceManagement() {
         <button
           onClick={() => setShowZohoModal(true)}
           style={{ backgroundColor: colors.cardBg, borderRadius: '0.75rem', padding: '1.5rem', boxShadow: colors.cardShadow, border: `2px solid ${colors.cardBorder}`, textAlign: 'left', cursor: 'pointer', transition: 'border-color 0.2s' }}
-          onMouseOver={(e) => e.currentTarget.style.borderColor = '#a855f7'}
+          onMouseOver={(e) => e.currentTarget.style.borderColor = '#ef4444'}
           onMouseOut={(e) => e.currentTarget.style.borderColor = colors.cardBorder}
         >
           <div style={{ backgroundColor: palette.purple.bg, width: '3rem', height: '3rem', borderRadius: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1rem' }}>
@@ -493,7 +493,7 @@ export default function DataSourceManagement() {
         <button
           onClick={() => setShowAPIModal(true)}
           style={{ backgroundColor: colors.cardBg, borderRadius: '0.75rem', padding: '1.5rem', boxShadow: colors.cardShadow, border: `2px solid ${colors.cardBorder}`, textAlign: 'left', cursor: 'pointer', transition: 'border-color 0.2s' }}
-          onMouseOver={(e) => e.currentTarget.style.borderColor = '#6366f1'}
+          onMouseOver={(e) => e.currentTarget.style.borderColor = '#ef4444'}
           onMouseOut={(e) => e.currentTarget.style.borderColor = colors.cardBorder}
         >
           <div style={{ backgroundColor: palette.blue.bg, width: '3rem', height: '3rem', borderRadius: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1rem' }}>
@@ -506,7 +506,7 @@ export default function DataSourceManagement() {
         <button
           onClick={() => setShowFileModal(true)}
           style={{ backgroundColor: colors.cardBg, borderRadius: '0.75rem', padding: '1.5rem', boxShadow: colors.cardShadow, border: `2px solid ${colors.cardBorder}`, textAlign: 'left', cursor: 'pointer', transition: 'border-color 0.2s' }}
-          onMouseOver={(e) => e.currentTarget.style.borderColor = '#22c55e'}
+          onMouseOver={(e) => e.currentTarget.style.borderColor = '#ef4444'}
           onMouseOut={(e) => e.currentTarget.style.borderColor = colors.cardBorder}
         >
           <div style={{ backgroundColor: palette.green.bg, width: '3rem', height: '3rem', borderRadius: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1rem' }}>
@@ -650,7 +650,7 @@ export default function DataSourceManagement() {
                     {/* Edit button for all data sources */}
                     <button
                       onClick={() => handleEditDataset(d)}
-                      style={{ padding: '0.5rem 1rem', fontSize: '0.875rem', color: '#6366f1', backgroundColor: 'transparent', borderRadius: '0.5rem', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', transition: 'background-color 0.2s' }}
+                      style={{ padding: '0.5rem 1rem', fontSize: '0.875rem', color: '#ef4444', backgroundColor: 'transparent', borderRadius: '0.5rem', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', transition: 'background-color 0.2s' }}
                       title={d.source_type === 'api_config' ? 'Edit API configuration' : 'Edit data source'}
                     >
                       <Edit className="w-4 h-4" />
@@ -660,7 +660,7 @@ export default function DataSourceManagement() {
                     <button
                       onClick={() => handleRefresh(d)}
                       disabled={refreshing[d.id]}
-                      style={{ padding: '0.5rem 1rem', fontSize: '0.875rem', color: '#6366f1', backgroundColor: 'transparent', borderRadius: '0.5rem', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: refreshing[d.id] ? 0.5 : 1, transition: 'background-color 0.2s' }}
+                      style={{ padding: '0.5rem 1rem', fontSize: '0.875rem', color: '#ef4444', backgroundColor: 'transparent', borderRadius: '0.5rem', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: refreshing[d.id] ? 0.5 : 1, transition: 'background-color 0.2s' }}
                       title={
                         d.source_type === 'api'
                           ? 'Refresh API connection and update data'

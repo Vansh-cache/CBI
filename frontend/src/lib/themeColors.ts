@@ -20,7 +20,7 @@ export const getThemeColors = (isDark: boolean) => ({
     // Input colors
     inputBg: isDark ? 'rgba(255,255,255,0.05)' : '#ffffff',
     inputBorder: isDark ? 'rgba(255,255,255,0.15)' : '#d1d5db',
-    inputFocus: '#6366f1',
+    inputFocus: '#ef4444',
 
     // Table colors
     tableBg: isDark ? 'rgba(255,255,255,0.02)' : '#ffffff',
@@ -34,6 +34,20 @@ export const getThemeColors = (isDark: boolean) => ({
     // Modal overlay
     modalOverlay: 'rgba(0, 0, 0, 0.5)',
     modalBg: isDark ? '#1a1a2e' : '#ffffff',
+
+    // Power BI–style builder colors (matches reference image)
+    pbiSidebar: isDark ? '#2d2d2d' : '#2d2d2d',
+    pbiSidebarBorder: isDark ? '#404040' : '#404040',
+    pbiCanvas: isDark ? '#edeeef' : '#edeeef',
+    pbiRibbon: isDark ? '#2d2d2d' : '#2d2d2d',
+    pbiRibbonBorder: isDark ? '#404040' : '#404040',
+    pbiBucketBg: isDark ? '#2d2d30' : '#ffffff',
+    pbiBucketBorder: isDark ? '#3c3c3c' : '#d4d4d4',
+    pbiText: isDark ? '#cccccc' : '#cccccc',
+    pbiTextMuted: isDark ? '#999999' : '#999999',
+    pbiAccent: '#0078d4',
+    pbiAccentHover: '#106ebe',
+    pbiGreen: '#107c10',
 });
 
 export const getColorPalette = (isDark: boolean) => ({
@@ -48,15 +62,15 @@ export const getColorPalette = (isDark: boolean) => ({
         bg: isDark ? 'rgba(147, 51, 234, 0.15)' : '#faf5ff',
         text: isDark ? '#a78bfa' : '#9333ea',
         icon: isDark ? 'rgba(147, 51, 234, 0.2)' : '#f3e8ff',
-        badge: isDark ? 'rgba(99, 102, 241, 0.2)' : '#e0e7ff',
-        badgeText: isDark ? '#a5b4fc' : '#4f46e5',
+        badge: isDark ? 'rgba(239, 68, 68, 0.2)' : '#fee2e2',
+        badgeText: isDark ? '#fca5a5' : '#dc2626',
     },
     indigo: {
-        bg: isDark ? 'rgba(99, 102, 241, 0.15)' : '#eef2ff',
-        text: isDark ? '#a5b4fc' : '#6366f1',
-        icon: isDark ? 'rgba(99, 102, 241, 0.2)' : '#e0e7ff',
-        badge: isDark ? 'rgba(99, 102, 241, 0.2)' : '#e0e7ff',
-        badgeText: isDark ? '#a5b4fc' : '#4f46e5',
+        bg: isDark ? 'rgba(239, 68, 68, 0.15)' : '#fef2f2',
+        text: isDark ? '#fca5a5' : '#ef4444',
+        icon: isDark ? 'rgba(239, 68, 68, 0.2)' : '#fee2e2',
+        badge: isDark ? 'rgba(239, 68, 68, 0.2)' : '#fee2e2',
+        badgeText: isDark ? '#fca5a5' : '#dc2626',
     },
     green: {
         bg: isDark ? 'rgba(34, 197, 94, 0.15)' : '#f0fdf4',
@@ -94,7 +108,7 @@ export const getRoleBadgeColors = (role: string, isDark: boolean) => {
     const roleColors: Record<string, { bg: string; text: string }> = {
         admin: { bg: palette.red.badge, text: palette.red.badgeText },
         developer: { bg: palette.indigo.badge, text: palette.indigo.badgeText },
-        viewer: { bg: palette.green.badge, text: palette.green.badgeText },
+        viewer: { bg: palette.red.badge, text: palette.red.badgeText },
     };
     return roleColors[role] || { bg: palette.gray.badge, text: palette.gray.badgeText };
 };

@@ -1,20 +1,25 @@
-/**
- * Data Preview Component
- * Power BI-like data preview pane showing raw dataset data
- */
-
-import { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Table, Search, Download, RefreshCw, ChevronLeft, ChevronRight, Filter, X } from 'lucide-react';
+
+interface ColorSystem {
+    cardBg: string;
+    cardBorder: string;
+    text: string;
+    muted: string;
+    inputBg: string;
+    inputBorder: string;
+    [key: string]: string;
+}
 
 interface DataPreviewProps {
     datasetId: number;
     datasetName: string;
-    data: unknown[];
+    data: any[];
     columns: { name: string; type: string }[];
     onRefresh?: () => void;
     onClose?: () => void;
     isDark: boolean;
-    colors: any;
+    colors: ColorSystem;
 }
 
 export default function DataPreview({
@@ -40,20 +45,23 @@ export default function DataPreview({
 
         // Apply search
         if (searchTerm.trim()) {
+            const lowSearch = searchTerm.toLowerCase();
             result = result.filter(row => {
                 if (!row || typeof row !== 'object') return false;
                 return Object.values(row).some(value =>
-                    String(value).toLowerCase().includes(searchTerm.toLowerCase())
+                    String(value ?? '').toLowerCase().includes(lowSearch)
                 );
             });
         }
 
         // Apply column filters
         Object.entries(columnFilters).forEach(([column, filterValue]) => {
-            if (filterValue.trim()) {
+            const val = filterValue as string;
+            if (val.trim()) {
+                const lowFilter = val.toLowerCase();
                 result = result.filter(row => {
                     const value = (row as any)[column];
-                    return String(value).toLowerCase().includes(filterValue.toLowerCase());
+                    return String(value ?? '').toLowerCase().includes(lowFilter);
                 });
             }
         });
@@ -65,6 +73,8 @@ export default function DataPreview({
                 const bVal = (b as any)[sortColumn];
 
                 if (aVal === bVal) return 0;
+                if (aVal == null) return 1;
+                if (bVal == null) return -1;
 
                 const comparison = aVal < bVal ? -1 : 1;
                 return sortDirection === 'asc' ? comparison : -comparison;
@@ -74,8 +84,37 @@ export default function DataPreview({
         return result;
     }, [data, searchTerm, sortColumn, sortDirection, columnFilters]);
 
+    // Pre-calculate column stats for all columns
+    const columnStats = useMemo(() => {
+        const stats: Record<string, { total: number; unique: number; nulls: number; filled: number }> = {};
+
+        columns.forEach(column => {
+            const values = data.map(row => (row as any)[column.name]);
+            const nonNullValues = values.filter(v => v != null);
+            const uniqueCount = new Set(nonNullValues).size;
+            const nullCount = data.length - nonNullValues.length;
+
+            stats[column.name] = {
+                total: data.length,
+                unique: uniqueCount,
+                nulls: nullCount,
+                filled: nonNullValues.length
+            };
+        });
+
+        return stats;
+    }, [data, columns]);
+
     // Pagination
-    const totalPages = Math.ceil(filteredData.length / pageSize);
+    const totalPages = Math.ceil(filteredData.length / pageSize) || 1;
+
+    // Reset to page 1 if current page is out of bounds
+    useEffect(() => {
+        if (currentPage > totalPages && totalPages > 0) {
+            setCurrentPage(1);
+        }
+    }, [totalPages, currentPage]);
+
     const startIndex = (currentPage - 1) * pageSize;
     const endIndex = Math.min(startIndex + pageSize, filteredData.length);
     const paginatedData = filteredData.slice(startIndex, endIndex);
@@ -91,12 +130,14 @@ export default function DataPreview({
 
     const handleExport = () => {
         // Convert to CSV
-        const headers = columns.map(c => c.name).join(',');
+        // Escape headers: wrap in quotes and escape internal quotes
+        const headers = columns.map(c => `"${c.name.replace(/"/g, '""')}"`).join(',');
+
         const rows = filteredData.map(row =>
             columns.map(col => {
                 const value = (row as any)[col.name];
-                // Escape commas and quotes
-                const escaped = String(value).replace(/"/g, '""');
+                // Escape values: wrap in quotes and escape internal quotes
+                const escaped = String(value ?? '').replace(/"/g, '""');
                 return `"${escaped}"`;
             }).join(',')
         );
@@ -109,19 +150,6 @@ export default function DataPreview({
         a.download = `${datasetName}_${new Date().toISOString().split('T')[0]}.csv`;
         a.click();
         URL.revokeObjectURL(url);
-    };
-
-    const getColumnStats = (columnName: string) => {
-        const values = data.map(row => (row as any)[columnName]).filter(v => v != null);
-        const uniqueCount = new Set(values).size;
-        const nullCount = data.length - values.length;
-
-        return {
-            total: data.length,
-            unique: uniqueCount,
-            nulls: nullCount,
-            filled: values.length
-        };
     };
 
     return (
@@ -202,7 +230,7 @@ export default function DataPreview({
                                 #
                             </th>
                             {columns.map(column => {
-                                const stats = getColumnStats(column.name);
+                                const stats = columnStats[column.name];
                                 return (
                                     <th
                                         key={column.name}
@@ -213,7 +241,7 @@ export default function DataPreview({
                                             <button
                                                 onClick={() => handleSort(column.name)}
                                                 className="flex items-center gap-1 font-medium hover:text-indigo-600 transition-colors"
-                                                style={{ color: sortColumn === column.name ? '#6366f1' : colors.text }}
+                                                style={{ color: sortColumn === column.name ? '#ef4444' : colors.text }}
                                             >
                                                 {column.name}
                                                 {sortColumn === column.name && (
@@ -226,15 +254,17 @@ export default function DataPreview({
                                                 <span
                                                     className="text-xs px-1.5 py-0.5 rounded"
                                                     style={{
-                                                        backgroundColor: isDark ? 'rgba(99, 102, 241, 0.15)' : 'rgba(99, 102, 241, 0.1)',
-                                                        color: '#6366f1'
+                                                        backgroundColor: isDark ? 'rgba(239, 68, 68, 0.15)' : 'rgba(239, 68, 68, 0.1)',
+                                                        color: '#ef4444'
                                                     }}
                                                 >
                                                     {column.type}
                                                 </span>
-                                                <span style={{ color: colors.muted }} className="text-xs" title={`${stats.unique} unique, ${stats.nulls} nulls`}>
-                                                    {stats.filled}/{stats.total}
-                                                </span>
+                                                {stats && (
+                                                    <span style={{ color: colors.muted }} className="text-xs" title={`${stats.unique} unique, ${stats.nulls} nulls`}>
+                                                        {stats.filled}/{stats.total}
+                                                    </span>
+                                                )}
                                             </div>
                                             <div className="relative">
                                                 <Filter className="absolute left-1 top-1/2 -translate-y-1/2 w-3 h-3" style={{ color: colors.muted }} />

@@ -327,7 +327,7 @@ export default function UserManagement() {
                           <button
                             onClick={() => openEdit(user)}
                             style={{ padding: '0.5rem', color: colors.muted, border: 'none', background: 'transparent', cursor: 'pointer', transition: 'color 0.2s' }}
-                            onMouseOver={(e) => e.currentTarget.style.color = '#6366f1'}
+                            onMouseOver={(e) => e.currentTarget.style.color = '#ef4444'}
                             onMouseOut={(e) => e.currentTarget.style.color = colors.muted}
                             title="Edit"
                           >

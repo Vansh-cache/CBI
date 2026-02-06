@@ -1,6 +1,6 @@
 import { ReactNode, useState } from 'react';
-import { useNavigate, NavLink } from 'react-router';
-import { Eye, LayoutDashboard, LogOut, Menu, X } from 'lucide-react';
+import { useNavigate, NavLink, useLocation } from 'react-router';
+import { Eye, LayoutDashboard, LogOut, Menu, X, ArrowLeft } from 'lucide-react';
 import type { User } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import ThemeToggle from '../shared/ThemeToggle';
@@ -9,38 +9,48 @@ interface ViewerLayoutProps {
   user: User;
   onLogout: () => void;
   children: ReactNode;
+  dashboardName?: string;
 }
 
-export default function ViewerLayout({ user, onLogout, children }: ViewerLayoutProps) {
+export default function ViewerLayout({ user, onLogout, children, dashboardName }: ViewerLayoutProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { isDark } = useTheme();
+  
+  // Check if we're viewing a specific dashboard
+  const isViewingDashboard = location.pathname.startsWith('/viewer/view/');
 
   const handleLogout = () => {
     onLogout();
     navigate('/login');
   };
 
-  // Theme colors - Green accent for Viewer
+  // Theme colors - Viewer: green (matches landing)
   const colors = {
     bg: isDark ? '#0f0f1a' : '#f1f5f9',
-    header: isDark ? 'rgba(26, 26, 46, 0.95)' : '#ffffff',
-    headerBorder: isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0',
+    header: isDark ? 'rgba(26, 26, 46, 0.92)' : 'rgba(255,255,255,0.98)',
+    headerBorder: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
     text: isDark ? '#f1f5f9' : '#1e293b',
     textMuted: isDark ? '#94a3b8' : '#64748b',
     textSecondary: isDark ? '#cbd5e1' : '#475569',
-    accent: '#22c55e',
-    accentBg: isDark ? 'rgba(34, 197, 94, 0.15)' : '#f0fdf4',
-    accentHover: isDark ? 'rgba(34, 197, 94, 0.25)' : '#dcfce7',
-    accentText: isDark ? '#86efac' : '#16a34a',
+    accent: '#ef4444',
+    logoGradient: 'linear-gradient(135deg, #ef4444, #f97316)',
+    logoShadow: '0 4px 15px rgba(239, 68, 68, 0.35)',
+    accentBg: isDark ? 'rgba(239, 68, 68, 0.15)' : '#fef2f2',
+    accentHover: isDark ? 'rgba(239, 68, 68, 0.25)' : '#fee2e2',
+    accentText: isDark ? '#fca5a5' : '#dc2626',
     navHover: isDark ? 'rgba(255,255,255,0.05)' : '#f8fafc',
-    navActive: isDark ? 'rgba(34, 197, 94, 0.15)' : '#f0fdf4',
+    navActive: isDark ? 'rgba(239, 68, 68, 0.15)' : '#fef2f2',
     dropdownBg: isDark ? 'rgba(26, 26, 46, 0.98)' : '#ffffff',
     dropdownBorder: isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0',
-    cardBg: isDark ? 'rgba(255,255,255,0.03)' : '#ffffff',
-    cardBorder: isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0',
-    cardShadow: isDark ? '0 4px 20px rgba(0,0,0,0.3)' : '0 4px 20px rgba(0,0,0,0.05)',
+    cardBg: isDark ? 'rgba(255,255,255,0.05)' : '#ffffff',
+    cardBorder: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
+    cardShadow: isDark ? '0 8px 32px rgba(0,0,0,0.3)' : '0 8px 32px rgba(0,0,0,0.08)',
+    orb1: isDark ? 'rgba(239, 68, 68, 0.2)' : 'rgba(239, 68, 68, 0.12)',
+    orb2: isDark ? 'rgba(249, 115, 22, 0.18)' : 'rgba(249, 115, 22, 0.1)',
+    gridColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.04)',
   };
 
   return (
@@ -48,16 +58,37 @@ export default function ViewerLayout({ user, onLogout, children }: ViewerLayoutP
       minHeight: '100vh',
       background: isDark
         ? 'linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%)'
-        : colors.bg,
+        : 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #f1f5f9 100%)',
+      position: 'relative',
+      overflow: 'hidden',
     }}>
+      {/* Animated background (Landing style) */}
+      <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', overflow: 'hidden', zIndex: 0 }}>
+        <div style={{
+          position: 'absolute', top: '-10%', right: '-5%', width: '400px', height: '400px',
+          background: `radial-gradient(circle, ${colors.orb1} 0%, transparent 70%)`, borderRadius: '50%',
+          filter: 'blur(60px)', animation: 'portal-float 8s ease-in-out infinite',
+        }} />
+        <div style={{
+          position: 'absolute', bottom: '-15%', left: '-10%', width: '500px', height: '500px',
+          background: `radial-gradient(circle, ${colors.orb2} 0%, transparent 70%)`, borderRadius: '50%',
+          filter: 'blur(80px)', animation: 'portal-float 10s ease-in-out infinite reverse',
+        }} />
+        <div style={{
+          position: 'absolute', inset: 0,
+          backgroundImage: `linear-gradient(${colors.gridColor} 1px, transparent 1px), linear-gradient(90deg, ${colors.gridColor} 1px, transparent 1px)`,
+          backgroundSize: '50px 50px',
+        }} />
+      </div>
       {/* Top Navigation Bar */}
       <nav style={{
         background: colors.header,
         borderBottom: `1px solid ${colors.headerBorder}`,
-        backdropFilter: isDark ? 'blur(20px)' : undefined,
+        backdropFilter: 'blur(20px)',
         position: 'sticky',
         top: 0,
         zIndex: 50,
+        boxShadow: isDark ? '0 4px 24px rgba(0,0,0,0.2)' : '0 4px 24px rgba(0,0,0,0.06)',
       }}>
         <div style={{
           maxWidth: '1400px',
@@ -88,11 +119,12 @@ export default function ViewerLayout({ user, onLogout, children }: ViewerLayoutP
               </button>
               <div style={{ display: 'flex', alignItems: 'center' }}>
                 <div style={{
-                  background: colors.accentBg,
+                  background: colors.logoGradient,
                   padding: '10px',
                   borderRadius: '12px',
+                  boxShadow: colors.logoShadow,
                 }}>
-                  <Eye style={{ width: '24px', height: '24px', color: colors.accent }} />
+                  <Eye style={{ width: '24px', height: '24px', color: 'white' }} />
                 </div>
                 <span style={{
                   marginLeft: '12px',
@@ -100,7 +132,7 @@ export default function ViewerLayout({ user, onLogout, children }: ViewerLayoutP
                   fontWeight: 600,
                   color: colors.text,
                 }}>
-                  Analytics Portal
+                  Cache BI
                 </span>
               </div>
             </div>
@@ -111,23 +143,64 @@ export default function ViewerLayout({ user, onLogout, children }: ViewerLayoutP
               alignItems: 'center',
               gap: '32px'
             }}>
-              <NavLink
-                to="/viewer/dashboard"
-                style={({ isActive }) => ({
-                  display: 'flex',
-                  alignItems: 'center',
-                  padding: '8px 16px',
-                  borderRadius: '10px',
-                  textDecoration: 'none',
-                  transition: 'all 0.2s ease',
-                  background: isActive ? colors.accentBg : 'transparent',
-                  color: isActive ? colors.accent : colors.textMuted,
-                  fontWeight: isActive ? 500 : 400,
-                })}
-              >
-                <LayoutDashboard style={{ width: '20px', height: '20px', marginRight: '8px' }} />
-                My Dashboards
-              </NavLink>
+              {isViewingDashboard ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <button
+                    onClick={() => navigate('/viewer/dashboard')}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      padding: '8px',
+                      borderRadius: '8px',
+                      background: 'transparent',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: colors.textMuted,
+                      transition: 'all 0.25s cubic-bezier(0.33, 1, 0.68, 1)',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = colors.navHover;
+                      e.currentTarget.style.color = colors.text;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'transparent';
+                      e.currentTarget.style.color = colors.textMuted;
+                    }}
+                  >
+                    <ArrowLeft style={{ width: '20px', height: '20px' }} />
+                  </button>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: '8px 16px',
+                    borderRadius: '10px',
+                    background: colors.accentBg,
+                    color: colors.accent,
+                    fontWeight: 500,
+                  }}>
+                    <LayoutDashboard style={{ width: '20px', height: '20px', marginRight: '8px' }} />
+                    {dashboardName || 'Dashboard'}
+                  </div>
+                </div>
+              ) : (
+                <NavLink
+                  to="/viewer/dashboard"
+                  style={({ isActive }) => ({
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: '8px 16px',
+                    borderRadius: '10px',
+                    textDecoration: 'none',
+                    transition: 'all 0.25s cubic-bezier(0.33, 1, 0.68, 1)',
+                    background: isActive ? colors.accentBg : 'transparent',
+                    color: isActive ? colors.accent : colors.textMuted,
+                    fontWeight: isActive ? 500 : 400,
+                  })}
+                >
+                  <LayoutDashboard style={{ width: '20px', height: '20px', marginRight: '8px' }} />
+                  My Dashboards
+                </NavLink>
+              )}
             </div>
 
             {/* Right Section */}
@@ -147,7 +220,7 @@ export default function ViewerLayout({ user, onLogout, children }: ViewerLayoutP
                     background: 'transparent',
                     border: 'none',
                     cursor: 'pointer',
-                    transition: 'all 0.2s ease',
+                    transition: 'all 0.25s cubic-bezier(0.33, 1, 0.68, 1)',
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.background = colors.navHover;
@@ -236,7 +309,7 @@ export default function ViewerLayout({ user, onLogout, children }: ViewerLayoutP
                         background: 'transparent',
                         border: 'none',
                         cursor: 'pointer',
-                        transition: 'all 0.2s ease',
+                        transition: 'all 0.25s cubic-bezier(0.33, 1, 0.68, 1)',
                       }}
                       onMouseEnter={(e) => {
                         e.currentTarget.style.background = isDark
@@ -273,7 +346,7 @@ export default function ViewerLayout({ user, onLogout, children }: ViewerLayoutP
                 padding: '12px 16px',
                 borderRadius: '10px',
                 textDecoration: 'none',
-                transition: 'all 0.2s ease',
+                transition: 'all 0.25s cubic-bezier(0.33, 1, 0.68, 1)',
                 background: isActive ? colors.accentBg : 'transparent',
                 color: isActive ? colors.accent : colors.textMuted,
               })}
@@ -286,10 +359,14 @@ export default function ViewerLayout({ user, onLogout, children }: ViewerLayoutP
       </nav>
 
       {/* Main Content */}
-      <main style={{
-        maxWidth: '1400px',
+      <main className="animate-fade-in" style={{
+        position: 'relative',
+        zIndex: 1,
+        maxWidth: isViewingDashboard ? 'none' : '1400px',
         margin: '0 auto',
-        padding: '32px 24px',
+        padding: isViewingDashboard ? '0' : '32px 24px',
+        height: isViewingDashboard ? 'calc(100vh - 64px)' : 'auto',
+        overflow: isViewingDashboard ? 'hidden' : 'visible',
       }}>
         {children}
       </main>

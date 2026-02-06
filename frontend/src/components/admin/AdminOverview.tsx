@@ -35,9 +35,9 @@ export default function AdminOverview() {
     text: isDark ? '#f1f5f9' : '#1e293b',
     textMuted: isDark ? '#94a3b8' : '#64748b',
     textSecondary: isDark ? '#cbd5e1' : '#475569',
-    cardBg: isDark ? 'rgba(255,255,255,0.05)' : '#ffffff',
-    cardBorder: isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0',
-    cardShadow: isDark ? '0 4px 20px rgba(0,0,0,0.3)' : '0 4px 20px rgba(0,0,0,0.05)',
+    cardBg: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.98)',
+    cardBorder: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
+    cardShadow: isDark ? '0 8px 32px rgba(0,0,0,0.3)' : '0 8px 32px rgba(0,0,0,0.08)',
     sectionBorder: isDark ? 'rgba(255,255,255,0.1)' : '#e5e7eb',
   };
 
@@ -172,9 +172,9 @@ export default function AdminOverview() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-      <div>
+      <div className="animate-fade-in-down">
         <h2 style={{ fontSize: '1.5rem', fontWeight: 600, color: colors.text, marginBottom: '4px' }}>System Overview</h2>
-        <p style={{ color: colors.textMuted }}>Manage your enterprise dashboard system</p>
+        <p style={{ color: colors.textMuted }}>Manage your Cache BI dashboard system</p>
       </div>
 
       {error && (
@@ -183,12 +183,21 @@ export default function AdminOverview() {
 
       {/* KPI Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '24px' }}>
-        {kpiCards.map((kpi) => {
+        {kpiCards.map((kpi, i) => {
           const palette = colorPalette[kpi.color];
           return (
             <div
               key={kpi.title}
-              style={{ background: colors.cardBg, borderRadius: '16px', padding: '24px', border: `1px solid ${colors.cardBorder}`, boxShadow: colors.cardShadow }}
+              className="hover-lift"
+              style={{
+                background: colors.cardBg, borderRadius: '20px', padding: '28px', border: `1px solid ${colors.cardBorder}`,
+                boxShadow: colors.cardShadow, transition: 'all 0.4s cubic-bezier(0.33, 1, 0.68, 1)', backdropFilter: 'blur(10px)',
+                animation: 'animate-fade-in-up 0.5s ease-out forwards',
+                animationDelay: `${i * 80}ms`,
+                opacity: 0,
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-6px)'; e.currentTarget.style.boxShadow = isDark ? '0 20px 40px rgba(0,0,0,0.35)' : '0 20px 40px rgba(0,0,0,0.12)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = colors.cardShadow; }}
             >
               <div style={{ marginBottom: '16px' }}>
                 <div style={{ background: palette.icon, padding: '12px', borderRadius: '12px', display: 'inline-flex' }}>
@@ -204,21 +213,28 @@ export default function AdminOverview() {
       </div>
 
       {/* Management Sections */}
-      <div>
+      <div className="animate-fade-in" style={{ animationDelay: '400ms' }}>
         <h3 style={{ fontSize: '1.125rem', fontWeight: 600, color: colors.text, marginBottom: '16px' }}>Quick Access</h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
-          {managementSections.map((section) => {
+          {managementSections.map((section, i) => {
             const palette = colorPalette[section.color];
             return (
               <Link
                 key={section.title}
                 to={section.link}
-                style={{ background: colors.cardBg, borderRadius: '16px', padding: '24px', border: `1px solid ${colors.cardBorder}`, boxShadow: colors.cardShadow, textDecoration: 'none', transition: 'all 0.3s ease' }}
-                onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = isDark ? '0 8px 30px rgba(0,0,0,0.4)' : '0 8px 30px rgba(0,0,0,0.1)'; }}
+                className="hover-lift"
+                style={{
+                  background: colors.cardBg, borderRadius: '20px', padding: '28px', border: `1px solid ${colors.cardBorder}`,
+                  boxShadow: colors.cardShadow, textDecoration: 'none', transition: 'all 0.4s cubic-bezier(0.33, 1, 0.68, 1)', backdropFilter: 'blur(10px)',
+                  animation: 'animate-fade-in-up 0.5s ease-out forwards',
+                  animationDelay: `${500 + i * 80}ms`,
+                  opacity: 0,
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-6px)'; e.currentTarget.style.boxShadow = isDark ? '0 20px 40px rgba(0,0,0,0.35)' : '0 20px 40px rgba(0,0,0,0.12)'; }}
                 onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = colors.cardShadow; }}
               >
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '16px' }}>
-                  <div style={{ background: palette.icon, padding: '12px', borderRadius: '12px', transition: 'transform 0.3s ease' }}>
+                  <div style={{ background: palette.icon, padding: '12px', borderRadius: '12px', transition: 'transform 0.35s cubic-bezier(0.33, 1, 0.68, 1)' }}>
                     <section.icon style={{ width: '24px', height: '24px', color: palette.text }} />
                   </div>
                   <span style={{ fontSize: '1.5rem', fontWeight: 700, color: palette.text }}>
@@ -236,9 +252,9 @@ export default function AdminOverview() {
       </div>
 
       {/* System Status */}
-      <div>
+      <div className="animate-fade-in-up animate-delay-300">
         <h3 style={{ fontSize: '1.125rem', fontWeight: 600, color: colors.text, marginBottom: '16px' }}>System Status</h3>
-        <div style={{ background: colors.cardBg, borderRadius: '16px', padding: '24px', border: `1px solid ${colors.cardBorder}`, boxShadow: colors.cardShadow }}>
+        <div style={{ background: colors.cardBg, borderRadius: '16px', padding: '24px', border: `1px solid ${colors.cardBorder}`, boxShadow: colors.cardShadow, transition: 'transform 0.35s cubic-bezier(0.33, 1, 0.68, 1), box-shadow 0.35s cubic-bezier(0.33, 1, 0.68, 1)' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '16px', borderBottom: `1px solid ${colors.sectionBorder}` }}>
               <div style={{ display: 'flex', alignItems: 'center' }}>

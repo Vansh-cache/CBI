@@ -197,7 +197,7 @@ export default function AlignmentTools({
         <div
             className="flex items-center gap-1 px-3 py-2 border-b"
             style={{
-                backgroundColor: isDark ? 'rgba(99, 102, 241, 0.08)' : 'rgba(99, 102, 241, 0.05)',
+                backgroundColor: isDark ? 'rgba(239, 68, 68, 0.08)' : 'rgba(239, 68, 68, 0.05)',
                 borderColor: colors.cardBorder
             }}
         >

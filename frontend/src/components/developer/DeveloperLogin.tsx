@@ -169,7 +169,7 @@ export default function DeveloperLogin() {
               disabled={loading}
               style={{
                 width: '100%',
-                backgroundColor: '#6366f1',
+                backgroundColor: '#ef4444',
                 color: 'white',
                 padding: '0.75rem',
                 borderRadius: '0.5rem',

@@ -32,16 +32,16 @@ export default function UnifiedLogin() {
         inputBg: isDark ? 'rgba(255, 255, 255, 0.05)' : '#ffffff',
         inputBorder: isDark ? 'rgba(255, 255, 255, 0.15)' : '#d1d5db',
         inputPlaceholder: isDark ? '#64748b' : '#9ca3af',
-        orbColor1: isDark ? 'rgba(99, 102, 241, 0.3)' : 'rgba(99, 102, 241, 0.2)',
-        orbColor2: isDark ? 'rgba(168, 85, 247, 0.25)' : 'rgba(168, 85, 247, 0.15)',
+        orbColor1: isDark ? 'rgba(239, 68, 68, 0.3)' : 'rgba(239, 68, 68, 0.2)',
+        orbColor2: isDark ? 'rgba(249, 115, 22, 0.25)' : 'rgba(249, 115, 22, 0.15)',
         orbColor3: isDark ? 'rgba(59, 130, 246, 0.15)' : 'rgba(59, 130, 246, 0.1)',
         gridColor: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)',
         shadow: isDark ? 'rgba(0, 0, 0, 0.5)' : 'rgba(0, 0, 0, 0.08)',
         errorBg: isDark ? 'rgba(239, 68, 68, 0.15)' : 'rgba(239, 68, 68, 0.1)',
         errorBorder: isDark ? 'rgba(239, 68, 68, 0.3)' : 'rgba(239, 68, 68, 0.3)',
         errorText: isDark ? '#fca5a5' : '#dc2626',
-        linkColor: isDark ? '#818cf8' : '#6366f1',
-        linkHover: isDark ? '#a5b4fc' : '#4f46e5',
+        linkColor: isDark ? '#fca5a5' : '#ef4444',
+        linkHover: isDark ? '#fecaca' : '#dc2626',
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -106,21 +106,21 @@ export default function UnifiedLogin() {
                     to { opacity: 1; }
                 }
                 @keyframes glow {
-                    0%, 100% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.4); }
-                    50% { box-shadow: 0 0 40px rgba(99, 102, 241, 0.6), 0 0 60px rgba(168, 85, 247, 0.3); }
+                    0%, 100% { box-shadow: 0 0 20px rgba(239, 68, 68, 0.4); }
+                    50% { box-shadow: 0 0 40px rgba(239, 68, 68, 0.6), 0 0 60px rgba(249, 115, 22, 0.3); }
                 }
                 .input-focus:focus {
-                    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3);
-                    border-color: #6366f1 !important;
+                    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.3);
+                    border-color: #ef4444 !important;
                 }
                 .btn-hover:hover {
                     transform: translateY(-2px);
-                    box-shadow: 0 10px 40px rgba(99, 102, 241, 0.5);
+                    box-shadow: 0 10px 40px rgba(239, 68, 68, 0.5);
                 }
                 .role-card:hover {
                     transform: translateY(-4px);
-                    border-color: ${isDark ? 'rgba(255,255,255,0.3)' : 'rgba(99, 102, 241, 0.3)'};
-                    background: ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(99, 102, 241, 0.08)'};
+                    border-color: ${isDark ? 'rgba(255,255,255,0.3)' : 'rgba(239, 68, 68, 0.3)'};
+                    background: ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(239, 68, 68, 0.08)'};
                 }
             `}</style>
 
@@ -210,12 +210,13 @@ export default function UnifiedLogin() {
                     padding: '40px',
                     border: `1px solid ${colors.cardBorder}`,
                     boxShadow: `0 25px 50px -12px ${colors.shadow}`,
-                    animation: isVisible ? 'fadeIn 0.8s ease-out 0.2s backwards' : 'none',
+                    animation: isVisible ? 'animate-scale-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards' : 'none',
+                    opacity: 0,
                 }}>
                     {/* Logo & Header */}
                     <div style={{ textAlign: 'center', marginBottom: '32px' }}>
                         <div style={{
-                            background: 'linear-gradient(135deg, #6366f1, #a855f7)',
+                            background: 'linear-gradient(135deg, #ef4444, #f97316)',
                             width: '80px',
                             height: '80px',
                             borderRadius: '20px',
@@ -223,7 +224,7 @@ export default function UnifiedLogin() {
                             alignItems: 'center',
                             justifyContent: 'center',
                             margin: '0 auto 20px',
-                            boxShadow: '0 8px 30px rgba(99, 102, 241, 0.4)',
+                            boxShadow: '0 8px 30px rgba(239, 68, 68, 0.4)',
                             animation: 'glow 3s ease-in-out infinite',
                         }}>
                             <LayoutDashboard style={{ width: '40px', height: '40px', color: 'white' }} />
@@ -238,7 +239,7 @@ export default function UnifiedLogin() {
                             Welcome Back
                         </h1>
                         <p style={{ color: colors.textMuted, fontSize: '1rem' }}>
-                            Sign in to your Enterprise Dashboard
+                            Sign in to Cache BI
                         </p>
                     </div>
 
@@ -300,7 +301,7 @@ export default function UnifiedLogin() {
                                         color: colors.text,
                                         fontSize: '15px',
                                         outline: 'none',
-                                        transition: 'all 0.3s ease',
+                                        transition: 'all 0.35s cubic-bezier(0.33, 1, 0.68, 1)',
                                         boxSizing: 'border-box',
                                     }}
                                     placeholder="Enter your email"
@@ -344,7 +345,7 @@ export default function UnifiedLogin() {
                                         color: colors.text,
                                         fontSize: '15px',
                                         outline: 'none',
-                                        transition: 'all 0.3s ease',
+                                        transition: 'all 0.35s cubic-bezier(0.33, 1, 0.68, 1)',
                                         boxSizing: 'border-box',
                                     }}
                                     placeholder="Enter your password"
@@ -394,7 +395,7 @@ export default function UnifiedLogin() {
                                     style={{
                                         width: '16px',
                                         height: '16px',
-                                        accentColor: '#6366f1',
+                                        accentColor: '#ef4444',
                                         cursor: 'pointer',
                                     }}
                                 />
@@ -423,7 +424,7 @@ export default function UnifiedLogin() {
                             style={{
                                 width: '100%',
                                 padding: '16px',
-                                background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                                background: 'linear-gradient(135deg, #ef4444, #f97316)',
                                 color: 'white',
                                 border: 'none',
                                 borderRadius: '12px',
@@ -436,7 +437,7 @@ export default function UnifiedLogin() {
                                 justifyContent: 'center',
                                 gap: '8px',
                                 boxShadow: '0 8px 30px rgba(99, 102, 241, 0.4)',
-                                transition: 'all 0.3s ease',
+                                transition: 'all 0.35s cubic-bezier(0.33, 1, 0.68, 1)',
                             }}
                         >
                             {loading ? (
@@ -471,8 +472,8 @@ export default function UnifiedLogin() {
                         }}>
                             {[
                                 { icon: Shield, label: 'Admin', color: '#ef4444', bg: 'rgba(239, 68, 68, 0.15)' },
-                                { icon: Code, label: 'Developer', color: '#6366f1', bg: 'rgba(99, 102, 241, 0.15)' },
-                                { icon: MonitorCheck, label: 'Viewer', color: '#22c55e', bg: 'rgba(34, 197, 94, 0.15)' },
+                                { icon: Code, label: 'Developer', color: '#ef4444', bg: 'rgba(239, 68, 68, 0.15)' },
+                                { icon: MonitorCheck, label: 'Viewer', color: '#ef4444', bg: 'rgba(239, 68, 68, 0.15)' },
                             ].map((role, i) => (
                                 <div
                                     key={i}
@@ -483,7 +484,7 @@ export default function UnifiedLogin() {
                                         borderRadius: '12px',
                                         padding: '16px 12px',
                                         textAlign: 'center',
-                                        transition: 'all 0.3s ease',
+                                        transition: 'all 0.35s cubic-bezier(0.33, 1, 0.68, 1)',
                                         cursor: 'default',
                                     }}
                                 >
@@ -515,7 +516,7 @@ export default function UnifiedLogin() {
                     fontSize: '13px',
                     marginTop: '24px'
                 }}>
-                    © 2026 Enterprise Dashboard Suite. All rights reserved.
+                    © 2026 Cache BI Platform. All rights reserved.
                 </p>
             </div>
         </div>
