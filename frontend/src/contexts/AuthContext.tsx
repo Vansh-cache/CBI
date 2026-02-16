@@ -231,21 +231,35 @@ export function AuthProvider({ children, onUnauthorized }: AuthProviderProps) {
         }
       }
 
-      const response = await msal.loginPopup(request);
-      const idToken = response.idToken;
-      if (!idToken) {
-        throw new Error('No ID token received from Microsoft');
+      try {
+        const response = await msal.loginPopup(request);
+        const idToken = response.idToken;
+        if (!idToken) {
+          throw new Error('No ID token received from Microsoft');
+        }
+        const res = await apiPost<{ user: User; token: string }>('/api/auth/login', {
+          id_token: idToken,
+        });
+        if (!res.success || !res.data?.token || !res.data?.user) {
+          throw new Error(res.message || 'Sign-in failed');
+        }
+        const { user, token } = res.data;
+        setToken(token);
+        setState({ user, token, loading: false, error: null });
+        return user;
+      } catch (popupError) {
+        console.error('Popup login error:', popupError);
+        try {
+          await msal.loginRedirect(request);
+          // This won't return - page will redirect
+          return new Promise(() => { });
+        } catch (redirectError) {
+          console.error('Redirect login error:', redirectError);
+          const msg = 'Unable to sign in. Please ensure pop-ups are allowed or try a different browser.';
+          setState((s) => ({ ...s, loading: false, error: msg }));
+          throw new Error(msg);
+        }
       }
-      const res = await apiPost<{ user: User; token: string }>('/api/auth/login', {
-        id_token: idToken,
-      });
-      if (!res.success || !res.data?.token || !res.data?.user) {
-        throw new Error(res.message || 'Sign-in failed');
-      }
-      const { user, token } = res.data;
-      setToken(token);
-      setState({ user, token, loading: false, error: null });
-      return user;
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Sign-in failed';
       setState((s) => ({
